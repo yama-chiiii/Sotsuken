@@ -19,8 +19,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        pink: {
+          DEFAULT: "#F777A6",
+          dark: "#DA3170",
+        },
+        blue: {
+          verylight:"#FAFBFF",
+          light: "#CBD3F2",
+          dark: "#3959CC",
+
+        },
+        green: {
+          DEFAULT:"#50DF5E"
+        }
       },
       spacing: {
         px: "1px",
@@ -28,6 +39,15 @@ export default {
       },
       fontFamily: {
         mPlus: ['"M PLUS Rounded 1c"', 'serif'],
+      },
+      borderWidth: {
+        DEFAULT: '1px',
+        '0': '0',
+        '2': '2px',
+        '3': '3px',
+        '4': '4px',
+        '6': '6px',
+        '8': '8px',
       },
     },
   },
