@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import Fotter from '../app/component/Footer'
 import './globals.css'
 
 const geistSans = localFont({
@@ -30,9 +29,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <div className='w-full flex justify-center bg-blue-100'>
-          <Fotter />
-        </div>
+
       </body>
     </html>
   )

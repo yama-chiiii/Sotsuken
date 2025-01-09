@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Footer from './component/Footer'
 import './globals.css'
 
 export default function Home() {
@@ -83,6 +84,10 @@ export default function Home() {
               詳しく見る＞
             </div>
           </div>
+          {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
+          <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
+          <Footer />
+        </div>
         </div>
       </div>
     </div>
