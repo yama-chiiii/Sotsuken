@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Footer from '../component/Footer'
 
 export default function Setting() {
   return (
@@ -26,7 +27,9 @@ export default function Setting() {
               alt='robot'
               className='w-40 h-40 md:w-64 md:h-64'
             />
-            <div className='font-semibold ml-12 md:text-lg'>このアプリについて</div>
+            <div className='font-semibold ml-12 md:text-lg'>
+              このアプリについて
+            </div>
           </div>
           <div className='w-5/6 mt-24 flex flex-row items-center'>
             <Image
@@ -36,10 +39,17 @@ export default function Setting() {
               alt='robot'
               className='w-40 h-40 md:w-64 md:h-64'
             />
-            <div className='font-semibold ml-12 md:text-lg'>ロボットについて</div>
+            <div className='font-semibold ml-12 md:text-lg'>
+              ロボットについて
+            </div>
           </div>
-          <div className='px-24 py-12 rounded-md font-semibold mt-36 bg-blue-dark text-white'>ログアウト</div>
+          <div className='px-24 py-12 rounded-md font-semibold mt-36 bg-blue-dark text-white'>
+            ログアウト
+          </div>
         </div>
+      </div>
+      <div className='w-full md:w-1/2 sticky bottom-0 z-10 flex justify-center bg-blue-100'>
+        <Footer />
       </div>
     </div>
   )

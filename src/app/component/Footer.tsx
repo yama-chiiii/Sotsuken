@@ -18,6 +18,7 @@ export default function Footer() {
         </Link>
       </div>
       <div className='flex flex-col justify-center items-center'>
+      <Link href={'/calendar'}>
         <Image
           src='/kiroku_gray.svg'
           width={64}
@@ -25,7 +26,8 @@ export default function Footer() {
           alt='robot'
           className='mt-12 w-40 h-40 md:w-64 md:h-64'
         />
-        <p className='font-semibold text-gray-500'>記録</p>
+          <p className='font-semibold text-gray-500'>記録</p>
+          </Link>
       </div>
       <div className='flex flex-col justify-center items-center'>
         <Image
