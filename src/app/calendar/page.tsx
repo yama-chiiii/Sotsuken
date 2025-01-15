@@ -4,6 +4,7 @@ import moment, { Moment } from 'moment'
 import 'moment/locale/ja'
 import Image from 'next/image'
 import React, { useState } from 'react'
+import Footer from '../component/Footer'
 
 moment.locale('ja')
 
@@ -125,11 +126,13 @@ const Calendar = () => {
               />
               <div className='flex flex-col ml-16'>
                 <div className='font-semibold'>回答記録</div>
-                <div className='mt-4 font-semibold text-gray-400'>
+                <div className='whitespace-nowrap mt-4 font-semibold text-gray-400'>
                   過去の質問への回答内容が確認できます
                 </div>
               </div>
-              <div className='ml-180 text-3xl text-blue-dark font-semibold'>＞</div>
+              <div className='w-full flex justify-end px-24'>
+                <div className='text-3xl text-blue-dark font-semibold'>＞</div>
+              </div>
             </div>
             <div className='w-11/12 mt-16 flex flex-row items-center border-2 rounded-xl border-blue-dark'>
               <Image
@@ -141,11 +144,13 @@ const Calendar = () => {
               />
               <div className='flex flex-col ml-16'>
                 <div className='font-semibold'>病気の記録</div>
-                <div className='mt-4 font-semibold text-gray-400'>
+                <div className='whitespace-nowrap mt-4 font-semibold text-gray-400'>
                   過去に診断された病気の情報を記録できます
                 </div>
               </div>
-              <div className='ml-148 text-3xl text-blue-dark font-semibold'>＞</div>
+              <div className='w-full flex justify-end px-24'>
+                <div className='text-3xl text-blue-dark font-semibold'>＞</div>
+              </div>
             </div>
             <div className='w-11/12 mt-16 flex flex-row items-center border-2 rounded-xl border-blue-dark'>
               <Image
@@ -157,13 +162,18 @@ const Calendar = () => {
               />
               <div className='flex flex-col ml-16'>
                 <div className='font-semibold'>ロボットの記録</div>
-                <div className='mt-4 font-semibold text-gray-400'>
+                <div className='whitespace-nowrap mt-4 font-semibold text-gray-400'>
                   過去のロボットからの診断結果を確認できます
                 </div>
               </div>
-              <div className='ml-132 text-3xl text-blue-dark font-semibold'>＞</div>
+              <div className='w-full flex justify-end px-24'>
+                <div className='text-3xl text-blue-dark font-semibold'>＞</div>
+              </div>
             </div>
           </div>
+        </div>
+        <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
+          <Footer />
         </div>
       </div>
     </div>
