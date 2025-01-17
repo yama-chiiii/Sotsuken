@@ -6,6 +6,7 @@ import Footer from './component/Footer'
 import './globals.css'
 
 export default function Home() {
+
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
       <div className='w-full md:w-1/2 min-h-screen bg-white font-mPlus'>

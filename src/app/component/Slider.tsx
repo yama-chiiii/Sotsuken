@@ -14,11 +14,13 @@ export default function Slider() {
     const endColor = [247, 119, 166]; // ピンク (#F777A6)
 
     let r, g, b;
+    // 青 → グレー (ratio <= 0.5)
     if (ratio <= 0.5) {
       const localRatio = ratio / 0.5;
       r = Math.round(startColor[0] + (midColor[0] - startColor[0]) * localRatio);
       g = Math.round(startColor[1] + (midColor[1] - startColor[1]) * localRatio);
       b = Math.round(startColor[2] + (midColor[2] - startColor[2]) * localRatio);
+      // グレー → ピンク (ratio > 0.5)
     } else {
       const localRatio = (ratio - 0.5) / 0.5;
       r = Math.round(midColor[0] + (endColor[0] - midColor[0]) * localRatio);
@@ -26,6 +28,7 @@ export default function Slider() {
       b = Math.round(midColor[2] + (endColor[2] - midColor[2]) * localRatio);
     }
 
+    //RGB色の生成
     return `rgb(${r}, ${g}, ${b})`;
   };
 
