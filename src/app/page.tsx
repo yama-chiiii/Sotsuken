@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import Footer from './component/Footer'
 import './globals.css'
 
@@ -13,9 +14,11 @@ export default function Home() {
             今日の記録
           </div>
           <div className='flex flex-row-reverse '>
-            <button className='w-80 h-32 mt-20 mx-36 sm:mx-84 rounded-md text-white bg-blue-dark'>
-              記録する
-            </button>
+            <Link href={'/syousai'}>
+              <button className='w-80 h-32 mt-20 mx-36 sm:mx-84 rounded-md text-white bg-blue-dark'>
+                記録する
+              </button>
+            </Link>
           </div>
           <div className='flex flex-col md:flex-row h-auto md:h-320 mx-32 sm:mx-84 my-16 bg-blue-verylight shadow-md rounded-md'>
             <div className='w-full md:w-1/2 h-full flex justify-center items-center'>
@@ -88,8 +91,8 @@ export default function Home() {
           </div>
           {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
           <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
-          <Footer />
-        </div>
+            <Footer />
+          </div>
         </div>
       </div>
     </div>
