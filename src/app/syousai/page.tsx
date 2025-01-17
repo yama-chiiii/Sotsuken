@@ -95,14 +95,15 @@ export default function Syousai() {
         </div>
         <div className='w-full h-auto flex flex-col items-start'>
           <div className='mt-64 mx-36 text-xl sm:text-lg font-semibold border-b-3 border-pink-dark'>
-            ひとことメモ
+            ひとことメモ (※64文字以内)
           </div>
         </div>
         <div className='w-full flex justify-center'>
           <textarea
+            maxLength={64}
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            rows={4}
+            rows={2}
             className='w-11/12 border-4 rounded-lg mt-12 p-8'
             placeholder='メモを記入してください'
           />
