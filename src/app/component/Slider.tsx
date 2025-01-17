@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useAuthContext } from '../context/AuthContext';
 
 export default function Slider() {
-  const { sliderValue, setSliderValue, } = useAuthContext();
-  const [circleColor, setCircleColor] = useState('#F2F2F2'); // 初期色
+  const { sliderValue, setSliderValue, setCircleColor } = useAuthContext();
+
 
   // スライダー位置に応じた色を計算
   const calculateColor = (value: number, min: number, max: number) => {
@@ -46,7 +45,7 @@ export default function Slider() {
       {/* 動的に色を変更する円 */}
       <div
         className='w-200 h-200 rounded-full'
-        style={{ backgroundColor: circleColor }}
+        style={{ backgroundColor: calculateColor(sliderValue, 1, 5) }}
           />
           <div className='mt-64 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
           今日の気分を選ぶ

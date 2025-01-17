@@ -7,6 +7,8 @@ import { useAuthContext } from './context/AuthContext'
 import './globals.css'
 
 export default function Home() {
+  const { circleColor } = useAuthContext();
+
   const { sliderValue, selectedTags, memo } = useAuthContext()
 
   const getMoodText = (value: number) => {
@@ -31,7 +33,10 @@ export default function Home() {
           </div>
           <div className='flex flex-col md:flex-row h-auto md:h-320 mx-32 sm:mx-84 my-16 bg-blue-verylight shadow-md rounded-md'>
             <div className='w-full md:w-1/2 h-full flex justify-center items-center'>
-              <div className='w-1/6 md:w-1/2 h-100 md:h-150 mt-36 md:mt-0 bg-pink-700 rounded-full'></div>
+            <div
+            className="w-160 h-160 mt-12 mx-auto rounded-full"
+            style={{ backgroundColor: circleColor }}
+          ></div>
             </div>
             <div className='w-full md:w-1/2 h-full flex flex-col '>
               <div className='flex flex-col items-center'>
