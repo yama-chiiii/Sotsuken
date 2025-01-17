@@ -3,9 +3,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import Footer from './component/Footer'
+import { useAuthContext } from './context/AuthContext'
 import './globals.css'
 
 export default function Home() {
+  const { sliderValue, selectedTags, memo } = useAuthContext()
+
+  const getMoodText = (value: number) => {
+    if (value <= 1.5) return '不調'
+    if (value <= 3) return '普通'
+    return '良好'
+  }
 
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
@@ -30,25 +38,27 @@ export default function Home() {
                 <div className='mt-20 sm:mt-40 text-md sm:text-xl font-semibold'>
                   一日の気分
                 </div>
-                <div className='mt-12 sm:mt-24 border-b-3 border-pink-dark text-3xl font-semibold'>
-                  普通
+                <div className='text-3xl font-semibold mt-8'>
+                  {getMoodText(sliderValue)}
                 </div>
                 <div className='flex flex-row'>
                   {/* タグ表示 */}
-                  <div className='px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                    #健康
-                  </div>
-                  <div className='px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                    #健康
-                  </div>
+                  {selectedTags.map((tag, index) => (
+                    <div
+                      key={index}
+                      className='px-16 py-4 bg-blue-light rounded-full text-blue-dark mx-4 mt-12 text-md font-semibold '
+                    >
+                      {tag}
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className='flex flex-col md:mb-0 mb-32'>
                 <div className='ml-28 mt-16 md:text-sm text-xl font-mPlus font-semibold'>
                   今日のひとことメモ
                 </div>
-                <div className='flex justify-center'>
-                  <textarea rows={3} className='w-11/12 border rounded p-4 ' />
+                <div className='w-full flex justify-center flex-wrap'>
+                  <div className='w-11/12 border-3 rounded-md font-semibold mt-4 bg-white px-4 py-12'>{memo}</div>
                 </div>
               </div>
             </div>

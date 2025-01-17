@@ -2,8 +2,36 @@
 
 import Link from 'next/link'
 import Slider from '../component/Slider'
+import { useAuthContext } from '../context/AuthContext'
 
 export default function Syousai() {
+  const { selectedTags, setSelectedTags, memo, setMemo } = useAuthContext()
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    )
+  }
+
+  const tagsNow = [
+    '#健康',
+    '#不健康',
+    '#快適',
+    '#良好',
+    '#普通',
+    '#無関心',
+    '#不快',
+  ]
+  const tagsInfluence = [
+    '#体調',
+    '#睡眠',
+    '#人間関係',
+    '#ストレス',
+    '#天候',
+    '#趣味',
+    '#タスク',
+    '#その他',
+  ]
 
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
@@ -24,27 +52,19 @@ export default function Syousai() {
             {/* タグ */}
             <div className='w-11/12 flex flex-col justify-start'>
               <div className='flex flex-row flex-wrap'>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #健康
-                </div>
-                <div className='w-84 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #不健康
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #快適
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #良好
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #普通
-                </div>
-                <div className='w-84 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #無関心
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #不快
-                </div>
+                {tagsNow.map((tag) => (
+                  <button
+                    key={tag}
+                    className={`px-16 py-2 rounded-2xl mx-4 mt-12 text-md font-semibold cursor-pointer ${
+                      selectedTags.includes(tag)
+                        ? 'bg-blue-dark text-white'
+                        : 'bg-blue-light text-blue-dark'
+                    }`}
+                    onClick={() => handleTagClick(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
               <div className='mt-12 border-dotted font-semibold text-gray-500'>
                 さらに表示
@@ -56,32 +76,19 @@ export default function Syousai() {
             </div>
             <div className='w-11/12 flex flex-col justify-start pb-24'>
               <div className='flex flex-row flex-wrap'>
-                {' '}
-                {/* flex-wrap を追加 */}
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #体調
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #睡眠
-                </div>
-                <div className='w-100 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #人間関係
-                </div>
-                <div className='w-100 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #ストレス
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #天候
-                </div>
-                <div className='w-72 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #趣味
-                </div>
-                <div className='w-84 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #タスク
-                </div>
-                <div className='w-84 px-16 py-4 mt-12 mx-8 font-semibold rounded-full bg-blue-light text-blue-dark text-sm'>
-                  #その他
-                </div>
+                {tagsInfluence.map((tag) => (
+                  <button
+                    key={tag}
+                    className={`px-16 py-2 rounded-2xl mx-4 mt-12 text-md font-semibold cursor-pointer ${
+                      selectedTags.includes(tag)
+                        ? 'bg-blue-dark text-white'
+                        : 'bg-blue-light text-blue-dark'
+                    }`}
+                    onClick={() => handleTagClick(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -93,8 +100,11 @@ export default function Syousai() {
         </div>
         <div className='w-full flex justify-center'>
           <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
             rows={4}
-            className='w-11/12 mt-12 border-4 p-8 rounded-lg'
+            className='w-11/12 border-4 rounded-lg mt-12 p-8'
+            placeholder='メモを記入してください'
           />
         </div>
 

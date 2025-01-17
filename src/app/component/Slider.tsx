@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuthContext } from '../context/AuthContext';
 
 export default function Slider() {
-  const [sliderValue, setSliderValue] = useState(3);
+  const { sliderValue, setSliderValue, } = useAuthContext();
   const [circleColor, setCircleColor] = useState('#F2F2F2'); // 初期色
 
   // スライダー位置に応じた色を計算
@@ -12,6 +13,7 @@ export default function Slider() {
     const startColor = [138, 159, 238]; // 青 (#8A9FEE)
     const midColor = [242, 242, 242]; // グレー (#F2F2F2)
     const endColor = [247, 119, 166]; // ピンク (#F777A6)
+
 
     let r, g, b;
     // 青 → グレー (ratio <= 0.5)
