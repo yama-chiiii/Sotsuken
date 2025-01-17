@@ -4,3 +4,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* スライダー全体の背景トラック */
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(to right, #8A9FEE,#F2F2F2,#F777A6);
+    border-radius: 5px;
+    outline: none;
+    z-index: 1;
+    transition: background-color 0.3s ease;
+  }
+
+  /* スライダーのつまみ */
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #3959CC;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: #3b82f6;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ラベル */
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    color: #555;
+    font-size: 16px;
+    font-weight: 600;
+  }
