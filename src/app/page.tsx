@@ -26,7 +26,7 @@ export default function Home() {
           </div>
           <div className='flex flex-row-reverse '>
             <Link href={'/syousai'}>
-              <button className='w-80 h-32 mt-20 mx-36 sm:mx-84 rounded-md text-white bg-blue-dark'>
+              <button className='w-80 h-32 mt-20 mx-36 sm:mx-84 font-semibold rounded-md text-white bg-blue-dark'>
                 記録する
               </button>
             </Link>
