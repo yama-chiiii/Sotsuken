@@ -1,9 +1,23 @@
-'use client'
+'use client';
 
-import Image from 'next/image'
-import Footer from '../component/Footer'
+import { signOut } from 'firebase/auth'; // Firebaseのログアウト関数をインポート
+import Image from 'next/image';
+import { useRouter } from 'next/navigation'; // ルーターを使用
+import Footer from '../component/Footer';
+import { auth } from '../firebaseConfig'; // Firebase設定ファイルをインポート
 
 export default function Setting() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth); // Firebaseのサインアウト処理
+      router.push('/signin'); // サインインページにリダイレクト
+    } catch (error) {
+      console.error('ログアウトに失敗しました:', error);
+    }
+  };
+
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
       <div className='w-full md:w-1/2 flex flex-col min-h-screen bg-white font-mPlus '>
@@ -19,7 +33,7 @@ export default function Setting() {
               alt='robot'
               className='w-40 h-40 md:w-64 md:h-64'
             />
-            <div className='font-semibold ml-12 md:text-lg'>アカウント連携</div>
+            <div className='font-semibold ml-12 md:text-lg'>アカウント情報</div>
           </div>
           <div className='w-5/6 mt-24 flex flex-row items-center'>
             <Image
@@ -45,14 +59,17 @@ export default function Setting() {
               ロボットについて
             </div>
           </div>
-          <div className='px-24 py-12 rounded-md font-semibold mt-36 bg-blue-dark text-white'>
+          <button
+            onClick={handleLogout} // ログアウト処理を実行
+            className='px-24 py-12 rounded-md font-semibold mt-36 bg-blue-dark text-white hover:bg-blue-400'
+          >
             ログアウト
-          </div>
+          </button>
         </div>
       </div>
       <div className='w-full md:w-1/2 sticky bottom-0 z-10 flex justify-center bg-blue-100'>
         <Footer />
       </div>
     </div>
-  )
+  );
 }
