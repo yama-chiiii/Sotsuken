@@ -1,19 +1,45 @@
 'use client'
 
+import moment from 'moment'
 import Link from 'next/link'
+import { useEffect } from 'react'
 import Slider from '../component/Slider'
 import { useAuthContext } from '../context/AuthContext'
 
 export default function Syousai() {
   const {
-    tag1,
-    tag2,
-    setTag1,
-    setTag2,
+    dailyRecords,
+    setDailyRecords,
+    sliderValue,
+    setSliderValue,
+    selectedTags,
     setSelectedTags,
+    circleColor,
+    setCircleColor,
     memo,
     setMemo,
-  } = useAuthContext()
+    tag1,
+    setTag1,
+    tag2,
+    setTag2,
+  } = useAuthContext();
+
+  const today = moment().format('YYYY-MM-DD');
+
+  useEffect(() => {
+    const todayData = dailyRecords[today] || {
+      sliderValue: 3,
+      selectedTags: [],
+      memo: '',
+      circleColor: '#F2F2F2', // デフォルトのcircleColorを追加
+    };
+    setSliderValue(todayData.sliderValue);
+    setSelectedTags(todayData.selectedTags);
+    setMemo(todayData.memo);
+    setCircleColor(todayData.circleColor); // circleColorを初期化
+    setTag1(todayData.selectedTags[0] || null);
+    setTag2(todayData.selectedTags[1] || null);
+  }, [dailyRecords, setSliderValue, setSelectedTags, setMemo, setCircleColor, setTag1, setTag2, today]);
 
   const handleTag1Click = (tag: string) => {
     if (tag1 === tag) {
@@ -34,6 +60,23 @@ export default function Syousai() {
       setSelectedTags((prev) => [...prev, tag])
     }
   }
+
+  const handleSave = () => {
+    const newRecord = {
+      sliderValue,
+      selectedTags,
+      memo,
+      circleColor, // circleColorを保存
+    };
+    setDailyRecords((prev) => ({
+      ...prev,
+      [today]: newRecord,
+    }));
+    alert('保存しました！');
+  };
+
+
+
 
   const tagsNow = [
     '#健康',
@@ -134,7 +177,7 @@ export default function Syousai() {
         </div>
 
         <Link href={'/'} className='w-full flex justify-center'>
-          <button className='w-1/3 h-auto my-32 py-12 rounded bg-blue-dark hover:bg-blue-200 font-semibold text-white text-2xl'>
+          <button  onClick={handleSave} className='w-1/3 h-auto my-32 py-12 rounded bg-blue-dark hover:bg-blue-200 font-semibold text-white text-2xl'>
             記録する
           </button>
         </Link>

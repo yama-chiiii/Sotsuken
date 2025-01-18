@@ -1,5 +1,6 @@
 'use client'
 
+import moment from 'moment'
 import Image from 'next/image'
 import Link from 'next/link'
 import Footer from './component/Footer'
@@ -8,14 +9,22 @@ import './globals.css'
 
 export default function Home() {
   const { circleColor } = useAuthContext();
+  const { dailyRecords } = useAuthContext();
+  const today = moment().format('YYYY-MM-DD');
 
-  const { sliderValue, selectedTags, memo } = useAuthContext()
+  const { selectedTags, memo } = useAuthContext()
 
   const getMoodText = (value: number) => {
     if (value <= 1.5) return '不調'
     if (value <= 3) return '普通'
     return '良好'
   }
+
+  const todayData = dailyRecords[today] || {
+    sliderValue: 3,
+    selectedTags: [],
+    memo: '',
+  };
 
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
@@ -44,7 +53,7 @@ export default function Home() {
                   一日の気分
                 </div>
                 <div className='text-3xl font-semibold mt-8'>
-                  {getMoodText(sliderValue)}
+                  {getMoodText(todayData.sliderValue)}
                 </div>
                 <div className='flex flex-row'>
                   {/* タグ表示 */}
