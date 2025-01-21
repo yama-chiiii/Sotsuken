@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import Footer from '../component/Footer'
 
 export default function Check() {
@@ -23,9 +24,11 @@ export default function Check() {
           </div>
         </div>
         <div className='w-full flex justify-center'>
-          <button className='w-1/2 h-auto mt-32 py-24 rounded bg-pink-400 hover:bg-pink-600 font-semibold text-white text-4xl'>
-            診断スタート
-          </button>
+          <Link href={"/check/choice"} className='w-full flex justify-center'>
+            <button className='w-1/2 h-auto mt-32 py-24 rounded bg-pink-400 hover:bg-pink-600 font-semibold text-white text-4xl'>
+              診断スタート
+            </button>
+          </Link>
         </div>
         <div className='mt-64 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
           ロボット診断
@@ -48,7 +51,9 @@ export default function Check() {
                   alt='robot'
                   className='mt-12 w-64 h-64 md:w-84 md:h-84'
                 />
-                <div className='mt-4 text-blue-dark font-semibold text-md'>晴れ</div>
+                <div className='mt-4 text-blue-dark font-semibold text-md'>
+                  晴れ
+                </div>
               </div>
               <div className='w-1/4 h-auto flex flex-col justify-center items-center  rounded bg-blue-light'>
                 <div className='text-blue-dark font-semibold text-md'>

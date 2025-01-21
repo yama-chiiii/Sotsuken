@@ -1,8 +1,19 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { auth, db } from '../firebaseConfig';
 
 interface AuthContextType {
+  loading: boolean;
   sliderValue: number;
   circleColor: string;
   selectedTags: string[];
@@ -37,50 +48,89 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const INITIAL_DATA = {
+  sliderValue: 3,
+  circleColor: '#F2F2F2',
+  selectedTags: [],
+  memo: '',
+  tag1: null,
+  tag2: null,
+  dailyRecords: {},
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [sliderValue, setSliderValue] = useState(3);
-  const [circleColor, setCircleColor] = useState('#F2F2F2');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [dailyRecords, setDailyRecords] = useState<{
-    [date: string]: {
-      sliderValue: number;
-      selectedTags: string[];
-      memo: string;
-      circleColor: string;
-    };
-  }>({});
+  const [sliderValue, setSliderValue] = useState(INITIAL_DATA.sliderValue);
+  const [circleColor, setCircleColor] = useState(INITIAL_DATA.circleColor);
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    INITIAL_DATA.selectedTags
+  );
+  const [dailyRecords, setDailyRecords] = useState(INITIAL_DATA.dailyRecords);
+  const [memo, setMemo] = useState(INITIAL_DATA.memo);
+  const [tag1, setTag1] = useState<string | null>(INITIAL_DATA.tag1);
+  const [tag2, setTag2] = useState<string | null>(INITIAL_DATA.tag2);
+  const [loading, setLoading] = useState(true);
 
-  const [memo, setMemo] = useState('');
-  const [tag1, setTag1] = useState<string | null>(null);
-  const [tag2, setTag2] = useState<string | null>(null);
+  // Firestoreにデータを同期
+  const syncDataToFirestore = useCallback(
+    async (userId: string) => {
+      const userDocRef = doc(db, 'users', userId);
+      const userData = {
+        sliderValue,
+        circleColor,
+        selectedTags,
+        memo,
+        tag1,
+        tag2,
+        dailyRecords,
+      };
 
+      try {
+        await setDoc(userDocRef, userData, { merge: true }); // データをFirestoreに同期
+      } catch (error) {
+        console.error('Firestoreへのデータ同期に失敗しました:', error);
+      }
+    },
+    [sliderValue, circleColor, selectedTags, memo, tag1, tag2, dailyRecords]
+  );
+
+  // Firestoreからデータを取得
   useEffect(() => {
-    const storedDailyRecords = localStorage.getItem('dailyRecords');
-    const storedSliderValue = localStorage.getItem('sliderValue');
-    const storedCircleColor = localStorage.getItem('circleColor');
-    const storedSelectedTags = localStorage.getItem('selectedTags');
-    const storedMemo = localStorage.getItem('memo');
-    const storedTag1 = localStorage.getItem('tag1');
-    const storedTag2 = localStorage.getItem('tag2');
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
 
-    if (storedDailyRecords) setDailyRecords(JSON.parse(storedDailyRecords));
-    if (storedSliderValue) setSliderValue(Number(storedSliderValue));
-    if (storedCircleColor) setCircleColor(storedCircleColor);
-    if (storedSelectedTags) setSelectedTags(JSON.parse(storedSelectedTags));
-    if (storedMemo) setMemo(storedMemo);
-    if (storedTag1) setTag1(storedTag1);
-    if (storedTag2) setTag2(storedTag2);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setSliderValue(userData.sliderValue ?? INITIAL_DATA.sliderValue);
+          setCircleColor(userData.circleColor ?? INITIAL_DATA.circleColor);
+          setSelectedTags(userData.selectedTags ?? INITIAL_DATA.selectedTags);
+          setMemo(userData.memo ?? INITIAL_DATA.memo);
+          setTag1(userData.tag1 ?? INITIAL_DATA.tag1);
+          setTag2(userData.tag2 ?? INITIAL_DATA.tag2);
+          setDailyRecords(userData.dailyRecords ?? INITIAL_DATA.dailyRecords);
+        } else {
+          // Firestoreに初期データを保存
+          const initialData = {
+            ...INITIAL_DATA,
+          };
+          await setDoc(userDocRef, initialData);
+          setDailyRecords(initialData.dailyRecords);
+        }
+      }
+      setLoading(false); // データ取得完了後にローディングを解除
+    });
+
+    return () => unsubscribe();
   }, []);
 
+  // 状態が変更されるたびにFirestoreにデータを同期
   useEffect(() => {
-    localStorage.setItem('dailyRecords', JSON.stringify(dailyRecords));
-    localStorage.setItem('sliderValue', sliderValue.toString());
-    localStorage.setItem('circleColor', circleColor);
-    localStorage.setItem('selectedTags', JSON.stringify(selectedTags));
-    localStorage.setItem('memo', memo);
-    localStorage.setItem('tag1', tag1 || '');
-    localStorage.setItem('tag2', tag2 || '');
-  }, [dailyRecords, sliderValue, circleColor, selectedTags, memo, tag1, tag2]);
+    const user = auth.currentUser;
+    if (user) {
+      syncDataToFirestore(user.uid);
+    }
+  }, [syncDataToFirestore]);
 
   return (
     <AuthContext.Provider
@@ -99,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTag1,
         setTag2,
         setDailyRecords,
+        loading,
       }}
     >
       {children}

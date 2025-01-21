@@ -1,16 +1,17 @@
 'use client';
 
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { useRouter } from 'next/navigation'; // useRouter フックをインポート
+import { doc, setDoc } from 'firebase/firestore'; // Firestoreの関数
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { auth } from '../firebaseConfig';
+import { auth, db } from '../firebaseConfig';
 
 export default function Setting() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter(); // useRouter フックを初期化
+  const router = useRouter();
 
   const handleRegister = async () => {
     if (!email || !password) {
@@ -31,7 +32,19 @@ export default function Setting() {
     setIsLoading(true);
     setMessage('');
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Firestoreにユーザーデータを保存
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        homeData: {}, // 必要に応じて初期データを設定
+      });
+
       setMessage('新規登録成功！');
       router.push('/'); // ホームページに遷移
     } catch (error) {
@@ -48,9 +61,7 @@ export default function Setting() {
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
       <div className='w-full md:w-1/2 flex flex-col items-center min-h-screen bg-white font-mPlus '>
-        <div className='mt-120 font-black text-4xl text-blue-dark'>
-          新規登録
-        </div>
+        <div className='mt-120 font-black text-4xl text-blue-dark'>新規登録</div>
         <div className='w-4/5 flex flex-col mt-24'>
           <label htmlFor='email' className='mt-40 font-semibold'>
             メールアドレス
@@ -82,7 +93,9 @@ export default function Setting() {
           onClick={handleRegister}
           disabled={isLoading}
           className={`w-1/4 h-auto py-8 px-16 mt-36 font-semibold text-xl rounded text-center text-white ${
-            isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-dark hover:bg-blue-400'
+            isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-dark hover:bg-blue-400'
           }`}
         >
           {isLoading ? '登録中...' : '登録'}
