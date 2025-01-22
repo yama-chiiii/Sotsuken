@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function Choice() {
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
@@ -8,13 +10,39 @@ export default function Choice() {
         <div className='mt-24 text-center font-bold text-sm sm:text-xl'>
           診断を選んでください
         </div>
-        <div className='w-11/12 mt-16 flex flex-row items-center border-2 rounded border-blue-dark'>
-          <div className='flex flex-col ml-16'>
-            <div className=""></div>
-          </div>
-          <div className='w-full flex justify-end px-24'>
-            <div className='text-3xl text-blue-dark font-semibold'>＞</div>
-          </div>
+        <div className='w-3/5 mt-32 flex flex-row items-center border-2 rounded border-blue-dark'>
+          <Link className='w-2/3 flex flex-col' href={'/check/choice/mental'}>
+            <div className='py-32 text-center text-blue-dark font-semibold text-4xl'>
+              メンタル編
+            </div>
+          </Link>
+          <Link
+            className='w-1/3 flex justify-center'
+            href={'/check/choice/mental'}
+          >
+            <div>
+              <div className='text-4xl text-center text-blue-dark hover:text-blue-300 font-semibold'>
+                ＞
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className='w-3/5 mt-32 flex flex-row items-center border-2 rounded border-blue-dark'>
+          <Link className='w-2/3 flex flex-col' href={'/check/choice/action'}>
+            <div className='py-32 text-center text-blue-dark font-semibold text-4xl'>
+              行動編
+            </div>
+          </Link>
+          <Link
+            className='w-1/3 flex justify-center'
+            href={'/check/choice/action'}
+          >
+            <div>
+              <div className='text-4xl text-center text-blue-dark hover:text-blue-300 font-semibold'>
+                ＞
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
