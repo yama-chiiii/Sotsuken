@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import Footer from '../component/Footer'
+import WeatherBox from '../component/WeatherBox'
 
 export default function Check() {
   return (
@@ -44,16 +45,7 @@ export default function Check() {
             />
             <div className='w-full h-140 mb-32 flex flex-row justify-around'>
               <div className='w-1/4 h-auto flex flex-col justify-center items-center rounded bg-blue-light'>
-                <Image
-                  src='/sunny.svg'
-                  width={120}
-                  height={120}
-                  alt='robot'
-                  className='mt-12 w-64 h-64 md:w-84 md:h-84'
-                />
-                <div className='mt-4 text-blue-dark font-semibold text-md'>
-                  晴れ
-                </div>
+                <WeatherBox />
               </div>
               <div className='w-1/4 h-auto flex flex-col justify-center items-center  rounded bg-blue-light'>
                 <div className='text-blue-dark font-semibold text-md'>
