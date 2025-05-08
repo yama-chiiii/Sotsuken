@@ -3,6 +3,7 @@
 import moment from 'moment'
 import Image from 'next/image'
 import Link from 'next/link'
+import CameraButton from './component/CameraButton'
 import Footer from './component/Footer'
 import { useAuthContext } from './context/AuthContext'
 import './globals.css'
@@ -117,6 +118,10 @@ export default function Home() {
               <div className='w-11/12 flex flex-row-reverse mb-32 font-semibold text-blue-dark'>
                 詳しく見る＞
               </div>
+            </div>
+            {/* ここにかめらのやつ組み込みたい */}
+            <div>
+              <CameraButton />
             </div>
             {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
             <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
