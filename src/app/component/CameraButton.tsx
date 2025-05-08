@@ -43,16 +43,26 @@ export default function CameraAnalyzer() {
       const formData = new FormData()
       formData.append('file', blob, 'capture.jpg')
 
-      const res = await fetch('http://localhost:8000/analyze', {
-        method: 'POST',
-        body: formData,
-      })
+      try {
+        const res = await fetch('http://localhost:8000/analyze', {
+          method: 'POST',
+          body: formData,
+        })
 
-      const data = await res.json()
-      if (data.status === 'success') {
-        setResult(`顔の状態: ${data.result.face_condition} (R値: ${data.result.color_score})`)
-      } else {
-        setResult(`エラー: ${data.message}`)
+        const data = await res.json()
+
+        if (data.status === 'success') {
+          setResult(
+            data.result.face_detected
+              ? '顔を検出しました'
+              : '顔は検出されませんでした'
+          )
+        } else {
+          setResult(`エラー: ${data.message}`)
+        }
+      } catch (err) {
+        console.error('通信エラー:', err)
+        setResult('サーバーに接続できませんでした')
       }
     }, 'image/jpeg')
   }
