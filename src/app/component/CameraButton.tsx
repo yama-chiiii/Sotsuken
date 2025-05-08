@@ -1,12 +1,18 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-export default function CameraAnalyzer() {
+type Detection = {
+  label: string
+  confidence: number
+  box: [number, number, number, number] // x1, y1, x2, y2
+}
+
+export default function CameraButton() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [result, setResult] = useState<string | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [result, setResult] = useState<string | null>(null)
 
   const startCamera = async () => {
     const s = await navigator.mediaDevices.getUserMedia({ video: true })
@@ -26,7 +32,7 @@ export default function CameraAnalyzer() {
     console.log('🛑 カメラ停止')
   }
 
-  const captureAndAnalyze = async () => {
+  const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current) return
 
     const width = videoRef.current.videoWidth
@@ -51,12 +57,25 @@ export default function CameraAnalyzer() {
 
         const data = await res.json()
 
+        ctx.drawImage(videoRef.current!, 0, 0, width, height) // 背景として再描画
         if (data.status === 'success') {
-          setResult(
-            data.result.face_detected
-              ? '顔を検出しました'
-              : '顔は検出されませんでした'
-          )
+          const detections: Detection[] = data.result.detections
+          if (detections.length === 0) {
+            setResult('顔は検出されませんでした')
+          } else {
+            setResult(`顔を ${detections.length} 個検出しました`)
+          }
+
+          ctx.strokeStyle = 'lime'
+          ctx.lineWidth = 2
+          ctx.font = '16px sans-serif'
+          ctx.fillStyle = 'lime'
+
+          detections.forEach((det) => {
+            const [x1, y1, x2, y2] = det.box
+            ctx.strokeRect(x1, y1, x2 - x1, y2 - y1)
+            ctx.fillText(`${det.label} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 - 6)
+          })
         } else {
           setResult(`エラー: ${data.message}`)
         }
@@ -67,14 +86,24 @@ export default function CameraAnalyzer() {
     }, 'image/jpeg')
   }
 
+  useEffect(() => {
+    const interval = setInterval(analyzeFrame, 2000) // 2秒ごとに解析
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div className="flex flex-col items-center space-y-4">
-      <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', maxWidth: 500 }} />
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{ width: '100%', maxWidth: 500, display: 'none' }}
+      />
+      <canvas ref={canvasRef} style={{ width: '100%', maxWidth: 500 }} />
       <div className="flex gap-2">
         <button onClick={startCamera} className="bg-blue-600 text-white px-4 py-2 rounded">カメラ起動</button>
         <button onClick={stopCamera} className="bg-red-600 text-white px-4 py-2 rounded">カメラ停止</button>
-        <button onClick={captureAndAnalyze} className="bg-green-600 text-white px-4 py-2 rounded">顔色解析</button>
       </div>
       {result && <p>{result}</p>}
     </div>
