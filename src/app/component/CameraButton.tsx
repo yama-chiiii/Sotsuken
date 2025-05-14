@@ -1,47 +1,61 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useState } from 'react'
 
-type Detection = {
-  label: string
-  confidence: number
-  box: [number, number, number, number] // x1, y1, x2, y2
+type Props = {
+  videoRef: RefObject<HTMLVideoElement>
+  canvasRef: RefObject<HTMLCanvasElement>
+  setIsActive: (active: boolean) => void
 }
 
-export default function CameraButton() {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [stream, setStream] = useState<MediaStream | null>(null)
+export default function CameraButton({ videoRef, canvasRef, setIsActive }: Props) {
   const [result, setResult] = useState<string | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   const startCamera = async () => {
-    const s = await navigator.mediaDevices.getUserMedia({ video: true })
-    if (videoRef.current) {
-      videoRef.current.srcObject = s
-      await videoRef.current.play()
-      setStream(s)
-      console.log('✅ カメラ起動完了')
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = s
+        await videoRef.current.play()
+        setStream(s)
+        setIsActive(true)
+        console.log('✅ カメラ起動')
+      }
+    } catch (err) {
+      console.error('❌ カメラ起動失敗:', err)
     }
   }
 
   const stopCamera = () => {
-    stream?.getTracks().forEach((track) => track.stop())
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
+      setStream(null)
+    }
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
+    setIsActive(false)
     console.log('🛑 カメラ停止')
   }
 
-  const analyzeFrame = async () => {
+  const takePhotoAndAnalyze = async () => {
     if (!videoRef.current || !canvasRef.current) return
 
     const width = videoRef.current.videoWidth
     const height = videoRef.current.videoHeight
+
+    if (width === 0 || height === 0) {
+      console.warn('⚠️ カメラが準備できていません')
+      return
+    }
+
     canvasRef.current.width = width
     canvasRef.current.height = height
 
     const ctx = canvasRef.current.getContext('2d')
     if (!ctx) return
+
     ctx.drawImage(videoRef.current, 0, 0, width, height)
 
     canvasRef.current.toBlob(async (blob) => {
@@ -50,62 +64,51 @@ export default function CameraButton() {
       formData.append('file', blob, 'capture.jpg')
 
       try {
-        const res = await fetch('http://localhost:8000/analyze', {
+        await fetch('http://localhost:8000/analyze', {
           method: 'POST',
           body: formData,
         })
 
+        const res = await fetch('http://localhost:8000/diagnose')
         const data = await res.json()
 
-        ctx.drawImage(videoRef.current!, 0, 0, width, height) // 背景として再描画
         if (data.status === 'success') {
-          const detections: Detection[] = data.result.detections
-          if (detections.length === 0) {
-            setResult('顔は検出されませんでした')
-          } else {
-            setResult(`顔を ${detections.length} 個検出しました`)
-          }
-
-          ctx.strokeStyle = 'lime'
-          ctx.lineWidth = 2
-          ctx.font = '16px sans-serif'
-          ctx.fillStyle = 'lime'
-
-          detections.forEach((det) => {
-            const [x1, y1, x2, y2] = det.box
-            ctx.strokeRect(x1, y1, x2 - x1, y2 - y1)
-            ctx.fillText(`${det.label} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 - 6)
-          })
+          setResult(`あなたの表情は「${data.emotion}」です`)
         } else {
-          setResult(`エラー: ${data.message}`)
+          setResult(`診断エラー: ${data.message}`)
         }
       } catch (err) {
         console.error('通信エラー:', err)
         setResult('サーバーに接続できませんでした')
+      } finally {
+        stopCamera() // 撮影後にカメラ停止
       }
     }, 'image/jpeg')
   }
 
-  useEffect(() => {
-    const interval = setInterval(analyzeFrame, 2000) // 2秒ごとに解析
-    return () => clearInterval(interval)
-  }, [])
-
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        style={{ width: '100%', maxWidth: 500, display: 'none' }}
-      />
-      <canvas ref={canvasRef} style={{ width: '100%', maxWidth: 500 }} />
-      <div className="flex gap-2">
-        <button onClick={startCamera} className="bg-blue-600 text-white px-4 py-2 rounded">カメラ起動</button>
-        <button onClick={stopCamera} className="bg-red-600 text-white px-4 py-2 rounded">カメラ停止</button>
+    <div className="flex flex-col items-center space-y-4 mt-6">
+      <div className="flex gap-4">
+        <button
+          onClick={startCamera}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          カメラ起動
+        </button>
+        <button
+          onClick={takePhotoAndAnalyze}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          撮影
+        </button>
+        <button
+          onClick={stopCamera}
+          className="bg-red-600 text-white px-4 py-2 rounded"
+        >
+          カメラ停止
+        </button>
       </div>
-      {result && <p>{result}</p>}
+      {result && <p className="mt-4 font-semibold">{result}</p>}
     </div>
   )
 }

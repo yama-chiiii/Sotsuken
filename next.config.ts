@@ -1,5 +1,6 @@
-// next.config.ts
-const nextConfig = {
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {

@@ -3,8 +3,10 @@
 import moment from 'moment'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRef, useState } from 'react'
 import CameraButton from './component/CameraButton'
 import Footer from './component/Footer'
+import LiveFace from './component/LiveFace'
 import { useAuthContext } from './context/AuthContext'
 import './globals.css'
 import ClientWrapper from './layout.server'
@@ -13,6 +15,9 @@ export default function Home() {
   const { circleColor } = useAuthContext()
   const { dailyRecords } = useAuthContext()
   const today = moment().format('YYYY-MM-DD')
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [isActive, setIsActive] = useState(true)
 
   const { selectedTags, memo } = useAuthContext()
 
@@ -121,7 +126,8 @@ export default function Home() {
             </div>
             {/* ここにかめらのやつ組み込みたい */}
             <div>
-              <CameraButton />
+              <LiveFace videoRef={videoRef} canvasRef={canvasRef} isActive={isActive} />
+              <CameraButton videoRef={videoRef} canvasRef={canvasRef} setIsActive={setIsActive} />
             </div>
             {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
             <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
