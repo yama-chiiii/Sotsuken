@@ -137,18 +137,26 @@ const Calendar = () => {
           {/* モーダル */}
           {selectedDate && (
             <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'>
-              <div className='bg-white p-6 rounded-md w-3/4 max-w-md'>
-                <h2 className='text-xl font-bold mb-4'>
+              <div className='bg-white p-24 rounded-md w-3/4 max-w-md'>
+                <h2 className='text-xl font-bold mb-8 border-b-2 border-pink-dark'>
                   {selectedDate.format('YYYY年MM月DD日')}の記録
                 </h2>
                 {selectedDateData ? (
                   <>
-                    <p className='mb-2'>気分: {selectedDateData.sliderValue}</p>
+                    <p className='mb-2'>
+                      気分: {selectedDateData?.sliderValue ?? '—'}
+                    </p>
+
                     <p className='mb-2'>
                       タグ:{' '}
-                      {selectedDateData.selectedTags.join(', ') || 'タグなし'}
+                      {selectedDateData?.selectedTags?.length
+                        ? selectedDateData.selectedTags.join(', ')
+                        : 'タグなし'}
                     </p>
                     <p className='mb-2'>メモ: {selectedDateData.memo}</p>
+                    <p className='mb-2'>
+                      表情: {selectedDateData?.emotion ?? '—'}
+                    </p>
                   </>
                 ) : (
                   <p className='mb-2'>記録がありません。</p>

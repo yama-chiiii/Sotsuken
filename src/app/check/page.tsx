@@ -2,10 +2,18 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRef, useState } from 'react'
+import CameraButton from '../component/CameraButton'
 import Footer from '../component/Footer'
+import LiveFace from '../component/LiveFace'
 import WeatherBox from '../component/WeatherBox'
 
 export default function Check() {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [isActive, setIsActive] = useState(true)
+  const [emotionResult, setEmotionResult] = useState<string | null>(null)
+
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
       <div className='w-full md:w-1/2 min-h-screen items-center bg-white font-mPlus'>
@@ -25,7 +33,7 @@ export default function Check() {
           </div>
         </div>
         <div className='w-full flex justify-center'>
-          <Link href={"/check/choice"} className='w-full flex justify-center'>
+          <Link href={'/check/choice'} className='w-full flex justify-center'>
             <button className='w-1/2 h-auto mt-32 py-24 rounded bg-pink-400 hover:bg-pink-600 font-semibold text-white text-4xl'>
               診断スタート
             </button>
@@ -63,6 +71,29 @@ export default function Check() {
               </div>
             </div>
           </div>
+        </div>
+        <div className='mt-64 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
+          カメラ診断
+        </div>
+        <div>
+          <LiveFace
+            videoRef={videoRef}
+            canvasRef={canvasRef}
+            isActive={isActive}
+          />
+          <CameraButton
+            videoRef={videoRef}
+            canvasRef={canvasRef}
+            setIsActive={setIsActive}
+            setEmotionResult={setEmotionResult}
+          />
+          {emotionResult && (
+            <div className='w-full mt-8 flex justify-center'>
+              <p className='text-blue-dark font-bold text-xl'>
+                診断結果：{emotionResult}
+              </p>
+            </div>
+          )}
         </div>
         <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
           <Footer />

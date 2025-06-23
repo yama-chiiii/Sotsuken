@@ -1,16 +1,33 @@
 'use client'
 
+import moment from 'moment'
 import { RefObject, useState } from 'react'
+import { useAuthContext } from '../context/AuthContext'
 
 type Props = {
   videoRef: RefObject<HTMLVideoElement>
   canvasRef: RefObject<HTMLCanvasElement>
   setIsActive: (active: boolean) => void
+  setEmotionResult: (text: string) => void
 }
 
-export default function CameraButton({ videoRef, canvasRef, setIsActive }: Props) {
+export default function CameraButton({
+  videoRef,
+  canvasRef,
+  setIsActive,
+}: Props) {
   const [result, setResult] = useState<string | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const { addDailyRecord } = useAuthContext()
+  const mapEmotionToColor = (emotion: string): string => {
+    const map: Record<string, string> = {
+      happy: '#FCD34D',
+      sad: '#93C5FD',
+      angry: '#FCA5A5',
+      neutral: '#D1D5DB',
+    }
+    return map[emotion] ?? '#D1D5DB'
+  }
 
   const startCamera = async () => {
     try {
@@ -40,6 +57,8 @@ export default function CameraButton({ videoRef, canvasRef, setIsActive }: Props
   }
 
   const takePhotoAndAnalyze = async () => {
+
+
     if (!videoRef.current || !canvasRef.current) return
 
     const width = videoRef.current.videoWidth
@@ -73,7 +92,13 @@ export default function CameraButton({ videoRef, canvasRef, setIsActive }: Props
         const data = await res.json()
 
         if (data.status === 'success') {
-          setResult(`あなたの表情は「${data.emotion}」です`)
+          const emotion = data.emotion
+
+          setResult(`あなたの表情は「${emotion}」です`)
+          addDailyRecord(moment().format('YYYY-MM-DD'), {
+            emotion: emotion,
+            circleColor: mapEmotionToColor(emotion),
+          })
         } else {
           setResult(`診断エラー: ${data.message}`)
         }
@@ -87,28 +112,28 @@ export default function CameraButton({ videoRef, canvasRef, setIsActive }: Props
   }
 
   return (
-    <div className="flex flex-col items-center space-y-4 mt-6">
-      <div className="flex gap-4">
+    <div className='flex flex-col items-center space-y-4 mt-6'>
+      <div className='flex gap-4'>
         <button
           onClick={startCamera}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className='bg-blue-dark text-blue-verylight  px-4 py-2 rounded'
         >
           カメラ起動
         </button>
         <button
           onClick={takePhotoAndAnalyze}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          className='bg-green-600 text-white px-4 py-2 rounded'
         >
           撮影
         </button>
         <button
           onClick={stopCamera}
-          className="bg-red-600 text-white px-4 py-2 rounded"
+          className='bg-red-600 text-white px-4 py-2 rounded'
         >
           カメラ停止
         </button>
       </div>
-      {result && <p className="mt-4 font-semibold">{result}</p>}
+      {result && <p className='mt-4 font-semibold'>{result}</p>}
     </div>
   )
 }
