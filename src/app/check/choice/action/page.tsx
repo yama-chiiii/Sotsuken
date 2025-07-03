@@ -1,11 +1,14 @@
 "use client";
 
+import { saveDiagnosisResult } from "@/app/utils/saveResult";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChangeEvent, useState } from "react";
 
 export default function Action() {
   const [checkedCount, setCheckedCount] = useState(0);
   const [result, setResult] = useState("");
+  const router = useRouter();
 
   const questions = [
     "早口で話す",
@@ -109,6 +112,17 @@ export default function Action() {
           <div className="w-3/4 p-8 bg-gray-100 border text-lg text-center mb-40">
             {result}
           </div>
+        )}
+        {result && (
+          <button
+            onClick={() => {
+              saveDiagnosisResult("action", result);
+              router.push("/calendar/history");
+            }}
+            className="w-1/3 mb-40 py-8 px-12 text-xl font-semibold rounded bg-pink hover:bg-pink-300 text-white"
+          >
+            結果を保存する
+          </button>
         )}
         <Link href={"/"} className="w-1/4 mb-40 text-xl font-semibold rounded text-center text-pink">
           <button>ホームにもどる</button>

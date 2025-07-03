@@ -52,10 +52,10 @@ export default function Check() {
               className='mt-12 w-64 h-64 md:w-120 md:h-120'
             />
             <div className='w-full h-140 mb-32 flex flex-row justify-around'>
-              <div className='w-1/4 h-auto flex flex-col justify-center items-center rounded bg-blue-light'>
+              <div className='w-1/3 h-auto flex flex-col justify-center items-center rounded bg-blue-light'>
                 <WeatherBox />
               </div>
-              <div className='w-1/4 h-auto flex flex-col justify-center items-center  rounded bg-blue-light'>
+              <div className='w-1/3 h-auto flex flex-col justify-center items-center  rounded bg-blue-light'>
                 <div className='text-blue-dark font-semibold text-md'>
                   睡眠時間
                 </div>
@@ -63,12 +63,12 @@ export default function Check() {
                   6時間
                 </div>
               </div>
-              <div className='w-1/4 h-auto flex flex-col justify-center items-center  rounded bg-blue-light'>
+              {/* <div className='w-1/4 h-auto flex flex-col justify-center items-center  rounded bg-blue-light'>
                 <div className='text-blue-dark font-semibold text-lg'>体温</div>
                 <div className='mt-4 text-blue-dark font-semibold text-3xl'>
                   正常
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

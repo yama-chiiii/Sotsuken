@@ -3,6 +3,7 @@
 import moment, { Moment } from 'moment'
 import 'moment/locale/ja'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import { useAuthContext } from '../context/AuthContext'
 
@@ -16,6 +17,7 @@ const Calendar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Moment | null>(null)
   const { dailyRecords } = useAuthContext()
+  const router = useRouter()
 
   const handleMonthChange = (month: string) => {
     const selectedMonth = moment(month, 'YYYY-MM')
@@ -170,12 +172,15 @@ const Calendar = () => {
               </div>
             </div>
           )}
-          <div className='flex flex-col justify-start w-11/12'>
+          <div className='flex flex-col justify-start w-11/12 mb-24'>
             <div className='mt-64 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
               体調の記録
             </div>
             <div className='flex flex-col items-center'>
-              <div className='w-11/12 mt-16 flex flex-row items-center border-2 rounded-xl border-blue-dark'>
+              <div
+                className='w-11/12 mt-16 flex flex-row items-center border-2 rounded-xl border-blue-dark cursor-pointer hover:bg-blue-50 transition'
+                onClick={() => router.push('/calendar/history')}
+              >
                 <Image
                   src='/kaitokiroku.svg'
                   width={64}
@@ -187,26 +192,6 @@ const Calendar = () => {
                   <div className='font-semibold'>回答記録</div>
                   <div className='whitespace-nowrap mt-4 font-semibold text-gray-400'>
                     過去の質問への回答内容が確認できます
-                  </div>
-                </div>
-                <div className='w-full flex justify-end px-24'>
-                  <div className='text-3xl text-blue-dark font-semibold'>
-                    ＞
-                  </div>
-                </div>
-              </div>
-              <div className='w-11/12 mt-16 flex flex-row items-center border-2 rounded-xl border-blue-dark'>
-                <Image
-                  src='/hospital.svg'
-                  width={64}
-                  height={64}
-                  alt='robot'
-                  className='my-12 mx-12 w-40 h-40 md:w-64 md:h-64'
-                />
-                <div className='flex flex-col ml-16'>
-                  <div className='font-semibold'>病気の記録</div>
-                  <div className='whitespace-nowrap mt-4 font-semibold text-gray-400'>
-                    過去に診断された病気の情報を記録できます
                   </div>
                 </div>
                 <div className='w-full flex justify-end px-24'>
