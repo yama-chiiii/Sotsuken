@@ -53,6 +53,9 @@ const INITIAL_DATA = {
   dailyRecords: {} as Record<string, DailyRecord>,
 }
 
+const dateKey = (d = new Date()) =>
+  new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(d)
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [sliderValue, setSliderValue] = useState(INITIAL_DATA.sliderValue)
   const [circleColor, setCircleColor] = useState(INITIAL_DATA.circleColor)
@@ -64,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [tag1, setTag1] = useState<string | null>(INITIAL_DATA.tag1)
   const [tag2, setTag2] = useState<string | null>(INITIAL_DATA.tag2)
   const [loading, setLoading] = useState(true)
+  const [todayKey, setTodayKey] = useState<string>(dateKey())
 
   const addDailyRecord = useCallback(
     (date: string, data: Partial<DailyRecord>) => {
@@ -75,7 +79,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [],
   )
 
-  // Firestoreにデータを同期
+  useEffect(() => {
+    const tick = () => {
+    const now = dateKey()
+    if (now !== todayKey) {
+      setTodayKey(now)
+      setSliderValue(INITIAL_DATA.sliderValue)
+      setCircleColor(INITIAL_DATA.circleColor)
+      setSelectedTags(INITIAL_DATA.selectedTags)
+      setMemo(INITIAL_DATA.memo)
+      setTag1(INITIAL_DATA.tag1)
+      setTag2(INITIAL_DATA.tag2)
+    }
+  }
+  const id = setInterval(tick, 60_000)
+  // すぐに1回実行（起動直後/手動で時刻変更した直後にも反映）
+  tick()
+  // タブ復帰時にもチェック
+  const onVisible = () => document.visibilityState === 'visible' && tick()
+  document.addEventListener('visibilitychange', onVisible)
+  return () => {
+    clearInterval(id)
+    document.removeEventListener('visibilitychange', onVisible)
+  }
+}, [todayKey])
+
   const syncDataToFirestore = useCallback(
     async (userId: string) => {
       const userDocRef = doc(db, 'users', userId)
@@ -98,7 +126,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [sliderValue, circleColor, selectedTags, memo, tag1, tag2, dailyRecords],
   )
 
-  // Firestoreからデータを取得
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {

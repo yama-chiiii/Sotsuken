@@ -4,8 +4,8 @@ import moment, { Moment } from 'moment'
 import 'moment/locale/ja'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
-import { useAuthContext } from '../context/AuthContext'
+import React, { useMemo, useState } from 'react'
+import { useAuthContext, type DailyRecord } from '../context/AuthContext'
 
 import Footer from '../component/Footer'
 import ClientWrapper from '../layout.server'
@@ -13,11 +13,32 @@ import ClientWrapper from '../layout.server'
 moment.locale('ja')
 
 const Calendar = () => {
+  const DEFAULT_GRAY = '#d1d5db'
+
   const [currentMonth, setCurrentMonth] = useState(moment())
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Moment | null>(null)
   const { dailyRecords } = useAuthContext()
   const router = useRouter()
+  const dayKey = (m: Moment) => m.format('YYYY-MM-DD')
+
+
+  const colorFromSlider = (value: number): string => {
+    if (value <= 1.5) return '#bbbbbb'
+    if (value <= 3) return '#9ca3af'
+    return '#60a5fa'
+  }
+
+  const decideCircleColor = (rec?: DailyRecord | null): string => {
+    if (!rec) return DEFAULT_GRAY
+    const c = rec.circleColor?.trim().toLowerCase()
+    // 1) 実色が保存されていれば最優先（#f2f2f2 や '' は未設定扱い）
+    if (c && c !== '#f2f2f2') return rec.circleColor as string
+    // 2) 実色が無ければスライダーから算出
+    if (typeof rec.sliderValue === 'number') return colorFromSlider(rec.sliderValue)
+    // 3) それ以外（emotionのみ等）は既定グレー
+    return DEFAULT_GRAY
+  }
 
   const handleMonthChange = (month: string) => {
     const selectedMonth = moment(month, 'YYYY-MM')
@@ -49,7 +70,7 @@ const Calendar = () => {
     return calendar
   }
 
-  const calendar = generateCalendar()
+  const calendar = useMemo(generateCalendar, [currentMonth])
 
   const generateDayClass = (day: Moment): string => {
     let classes =
@@ -71,7 +92,7 @@ const Calendar = () => {
     .map((_, index) => moment().month(index).format('YYYY-MM'))
 
   const selectedDateData = selectedDate
-    ? dailyRecords[selectedDate.format('YYYY-MM-DD')] || null
+    ? dailyRecords[dayKey(selectedDate)] ?? null
     : null
 
   return (
@@ -110,13 +131,15 @@ const Calendar = () => {
               {calendar.map((week, weekIndex) => (
                 <React.Fragment key={weekIndex}>
                   {week.map((day) => {
-                    const dayData = dailyRecords[day.format('YYYY-MM-DD')]
-                    const circleColor = dayData?.circleColor || '#d1d5db' // デフォルトはグレー
+                    const dayData = dailyRecords[dayKey(day)]
+                    const circleColor = decideCircleColor(
+                      dayData as DailyRecord,
+                    )
                     return (
                       <div
                         key={day.format('YYYY-MM-DD')}
                         className={`p-12 text-center cursor-pointer ${
-                          day.isSame(moment(), 'day') ? 'bg-blue-300' : ''
+                          dayKey(day) === dayKey(moment()) ? 'bg-blue-300' : ''
                         }`}
                         onClick={() => handleDateClick(day)}
                       >
@@ -155,7 +178,7 @@ const Calendar = () => {
                         ? selectedDateData.selectedTags.join(', ')
                         : 'タグなし'}
                     </p>
-                    <p className='mb-2'>メモ: {selectedDateData.memo}</p>
+                    <p className='mb-2'>メモ: {selectedDateData.memo ?? '—'}</p>
                     <p className='mb-2'>
                       表情: {selectedDateData?.emotion ?? '—'}
                     </p>

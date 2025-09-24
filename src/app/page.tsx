@@ -22,10 +22,10 @@ export default function Home() {
     return '良好'
   }
 
-  const todayData = dailyRecords[today] || {
-    sliderValue: 3,
-    selectedTags: [],
-    memo: '',
+  const todayData = {
+    sliderValue: dailyRecords[today]?.sliderValue ?? 3,
+    selectedTags: dailyRecords[today]?.selectedTags ?? [],
+    memo: dailyRecords[today]?.memo ?? '',
   }
 
   return (
@@ -120,7 +120,7 @@ export default function Home() {
               </div>
             </div>
 
-                        {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
+            {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
             <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
               <Footer />
             </div>

@@ -2,17 +2,34 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import CameraButton from '../component/CameraButton'
 import Footer from '../component/Footer'
 import LiveFace from '../component/LiveFace'
 import WeatherBox from '../component/WeatherBox'
+import { useAuthContext } from '../context/AuthContext'
 
 export default function Check() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isActive, setIsActive] = useState(true)
   const [emotionResult, setEmotionResult] = useState<string | null>(null)
+  const { addDailyRecord, circleColor } = useAuthContext()
+  const dateKey = useCallback(
+   () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date()),
+   []
+ )
+  const handleEmotion = useCallback(
+   (emotion: string) => {
+     setEmotionResult(emotion)
+     // 色が未設定なら同梱しない（既存色は維持）
+     const payload = circleColor
+       ? { emotion, circleColor }
+       : { emotion }
+     addDailyRecord(dateKey(), payload)
+   },
+   [addDailyRecord, circleColor, dateKey]
+ )
 
   return (
     <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
@@ -80,6 +97,7 @@ export default function Check() {
             videoRef={videoRef}
             canvasRef={canvasRef}
             isActive={isActive}
+            onEmotion={handleEmotion}
           />
           <CameraButton
             videoRef={videoRef}
