@@ -6,12 +6,19 @@ import '@tensorflow/tfjs-backend-cpu'
 import '@tensorflow/tfjs-backend-webgl'
 import type * as FaceAPI from '@vladmandic/face-api'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAuthContext } from '../context/AuthContext'
 
 /** 調整パラメータ（重い場合はもっと下げてもOK） */
 const DETECT_FPS = 10
 const DETECTOR_INPUT = 224
 const EXPRESSION_THRESHOLD = 0.72
 const COOLDOWN_MS = 1500
+
+// コンポーネント内の先頭あたりに追加
+const dateKey = () =>
+  new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(
+    new Date(),
+  )
 
 type TinyFaceDetectorOptions = InstanceType<
   typeof FaceAPI.TinyFaceDetectorOptions
@@ -39,6 +46,7 @@ export default function Live({ onShot }: LiveProps = {}) {
   // ----- Refs / State -----
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { updateEmotion } = useAuthContext()
   const faceapiRef = useRef<typeof import('@vladmandic/face-api') | null>(null)
   const modelsLoadedRef = useRef(false)
   const loadingRef = useRef<Promise<void> | null>(null)
@@ -180,12 +188,24 @@ export default function Live({ onShot }: LiveProps = {}) {
   }, [])
 
   // ----- 撮影（親へも通知） -----
+  // 既存の shot を置き換え
   const shot = useCallback(() => {
     const fixed = liveEmotion ?? null
-    if (onShot) onShot(fixed) // 親に渡して保存などに使用
-    setShotEmotion(fixed) // ← 撮影後にだけ表示する
-    stopCamera() // 運用に合わせて停止（継続したいなら消してOK）
-  }, [liveEmotion, onShot, stopCamera])
+
+    // 親へ通知（必要なら）
+    if (onShot) onShot(fixed)
+
+    // ★ ここがポイント：emotion だけを当日キーで安全に部分更新
+    if (fixed) {
+      void updateEmotion(dateKey(), fixed)
+    }
+
+    // 画面には「撮影後」だけ表示
+    setShotEmotion(fixed)
+
+    // 運用に合わせて停止（継続したいならこの1行は削除OK）
+    stopCamera()
+  }, [liveEmotion, onShot, stopCamera, updateEmotion])
 
   // ----- 検出＆描画 -----
   const detectFaces = useCallback(async () => {
