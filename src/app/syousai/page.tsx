@@ -1,15 +1,16 @@
 'use client'
 
-import moment from 'moment'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Slider from '../component/Slider'
-import { useAuthContext } from '../context/AuthContext'
+import { useAuthContext, type DailyRecord } from '../context/AuthContext'
 
 export default function Syousai() {
+  const DEFAULT_SYOUSAI_GRAY = '#F2F2F2'
+
   const {
     dailyRecords,
-    setDailyRecords,
+    addDailyRecord,
     sliderValue,
     setSliderValue,
     selectedTags,
@@ -22,61 +23,85 @@ export default function Syousai() {
     setTag1,
     tag2,
     setTag2,
-  } = useAuthContext();
+  } = useAuthContext()
+  const router = useRouter()
 
-  const today = moment().format('YYYY-MM-DD');
+  const dateKey = () =>
+    new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(
+      new Date(),
+    )
+  const today = dateKey()
 
   useEffect(() => {
-    const todayData = dailyRecords[today] || {
+    const defaults: DailyRecord = {
       sliderValue: 3,
       selectedTags: [],
       memo: '',
-      circleColor: '#F2F2F2', // デフォルトのcircleColorを追加
-    };
-    setSliderValue(todayData.sliderValue);
-    setSelectedTags(todayData.selectedTags);
-    setMemo(todayData.memo);
-    setCircleColor(todayData.circleColor); // circleColorを初期化
-    setTag1(todayData.selectedTags[0] || null);
-    setTag2(todayData.selectedTags[1] || null);
-  }, [dailyRecords, setSliderValue, setSelectedTags, setMemo, setCircleColor, setTag1, setTag2, today]);
+      circleColor: '#F2F2F2',
+    }
+    const recs = (dailyRecords ?? {}) as Record<string, Partial<DailyRecord>>
+    const raw = recs[today] ?? {}
+    const todayData: DailyRecord = {
+      sliderValue: raw.sliderValue ?? defaults.sliderValue,
+      selectedTags: raw.selectedTags ?? defaults.selectedTags,
+      memo: raw.memo ?? defaults.memo,
+      circleColor: raw.circleColor ?? defaults.circleColor,
+    }
+    setSliderValue(todayData.sliderValue ?? 0)
+    setSelectedTags(todayData.selectedTags ?? [])
+    setMemo(todayData.memo ?? '')
+    setCircleColor(todayData.circleColor ?? '#F2F2F2')
+    setTag1(todayData.selectedTags?.[0] ?? null)
+    setTag2(todayData.selectedTags?.[1] ?? null)
+  }, [
+    dailyRecords,
+    setSliderValue,
+    setSelectedTags,
+    setMemo,
+    setCircleColor,
+    setTag1,
+    setTag2,
+    today,
+  ])
 
   const handleTag1Click = (tag: string) => {
     if (tag1 === tag) {
       setTag1(null) // 選択解除
-      setSelectedTags((prev) => prev.filter((t) => t !== tag))
+      setSelectedTags((prev: string[]) => prev.filter((t) => t !== tag))
     } else {
       setTag1(tag) // 新たに選択
-      setSelectedTags((prev) => [...prev, tag])
+      setSelectedTags((prev: string[]) =>
+        prev.includes(tag) ? prev : [...prev, tag],
+      )
     }
   }
 
   const handleTag2Click = (tag: string) => {
     if (tag2 === tag) {
       setTag2(null)
-      setSelectedTags((prev) => prev.filter((t) => t !== tag))
+      setSelectedTags((prev: string[]) => prev.filter((t) => t !== tag))
     } else {
       setTag2(tag)
-      setSelectedTags((prev) => [...prev, tag])
+      setSelectedTags((prev: string[]) =>
+        prev.includes(tag) ? prev : [...prev, tag],
+      )
     }
   }
 
   const handleSave = () => {
-    const newRecord = {
+    const newRecord: Partial<DailyRecord> = {
       sliderValue,
       selectedTags,
       memo,
-      circleColor, // circleColorを保存
-    };
-    setDailyRecords((prev) => ({
-      ...prev,
-      [today]: newRecord,
-    }));
-    alert('保存しました！');
-  };
-
-
-
+    }
+    // ← 既定の灰色(#F2F2F2)は“未設定扱い”にして保存しない
+    if (circleColor && circleColor.toLowerCase() !== DEFAULT_SYOUSAI_GRAY.toLowerCase()) {
+      newRecord.circleColor = circleColor
+    }
+    addDailyRecord(today, newRecord)
+    alert('保存しました！')
+    router.push('/')
+  }
 
   const tagsNow = [
     '#健康',
@@ -176,11 +201,14 @@ export default function Syousai() {
           />
         </div>
 
-        <Link href={'/'} className='w-full flex justify-center'>
-          <button  onClick={handleSave} className='w-1/3 h-auto my-32 py-12 rounded bg-blue-dark hover:bg-blue-200 font-semibold text-white text-2xl'>
+        <div className='w-full flex justify-center'>
+          <button
+            onClick={handleSave}
+            className='w-1/3 h-auto my-32 py-12 rounded bg-blue-dark hover:bg-blue-200 font-semibold text-white text-2xl'
+          >
             記録する
           </button>
-        </Link>
+        </div>
       </div>
     </div>
   )
