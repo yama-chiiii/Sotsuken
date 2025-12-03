@@ -204,7 +204,7 @@ export default function Calendar() {
               {/* ロボットの記録 → /live へ遷移（保存は Live/親側で updateEmotion を使用） */}
               <div
                 className="w-11/12 mt-16 flex flex-row items-center border-2 rounded-xl border-blue-dark cursor-pointer hover:bg-blue-50 transition"
-                onClick={() => router.push('/live')}
+                onClick={() => router.push('/check')}
               >
                 <Image
                   src="/robot.svg"
