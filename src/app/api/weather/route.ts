@@ -12,7 +12,10 @@ export async function GET() {
 
     const weather = {
       description: data.weather?.[0]?.description || '',
-      temp: data.main?.temp || '',
+      temp: data.main?.temp || null,
+      pressure: data.main?.pressure || null,
+      humidity: data.main?.humidity || null,
+      condition: data.weather?.[0]?.main || '',
     }
 
     return NextResponse.json(weather)

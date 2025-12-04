@@ -21,6 +21,13 @@ export interface DailyRecord {
   memo?: string
   circleColor?: string
   emotion?: string
+  weather?: {
+    description: string
+    temp: number
+    pressure: number
+    humidity: number
+    condition: string
+  }
 }
 
 interface AuthContextType {
@@ -43,9 +50,9 @@ interface AuthContextType {
     React.SetStateAction<Record<string, DailyRecord>>
   >
 
-  /** 汎用：日別データを “部分更新” して Firestore にも反映 */
+  setTodayWeather: (w: DailyRecord['weather']) => void
+
   addDailyRecord: (date: string, data: Partial<DailyRecord>) => Promise<void>
-  /** 顔診断専用：emotion だけを安全に更新（既存の他フィールドを保持） */
   updateEmotion: (date: string, emotion: string) => Promise<void>
 }
 
@@ -81,7 +88,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const [todayKey, setTodayKey] = useState<string>(dateKey())
 
-  /** 現在のユーザーIDと最新の dailyRecords を参照するための ref */
+  // ⭐ Weather 保存用 state
+  const [todayWeather, setTodayWeather] = useState<
+    DailyRecord['weather'] | null
+  >(null)
+
+  // refs
   const userIdRef = useRef<string | null>(null)
   const dailyRecordsRef = useRef<Record<string, DailyRecord>>({})
 
@@ -89,46 +101,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     dailyRecordsRef.current = dailyRecords
   }, [dailyRecords])
 
-  /** undefined を除去してから保存するヘルパー */
   const cleanPartial = (data: Partial<DailyRecord>) =>
     Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)) as
       Partial<DailyRecord>
 
-  /** ローカル部分更新 + Firestore を当日キーだけマージ更新 */
+  // ⭐ DailyRecord（部分更新）+ weather 統合
   const addDailyRecord = useCallback(
     async (date: string, data: Partial<DailyRecord>) => {
       const clean = cleanPartial(data)
 
-      // ① ローカルをマージ
+      const full: Partial<DailyRecord> = {
+        ...clean,
+        weather: clean.weather ?? todayWeather ?? undefined,
+      }
+
       setDailyRecords(prev => ({
         ...prev,
-        [date]: { ...(prev[date] ?? {}), ...clean },
+        [date]: { ...(prev[date] ?? {}), ...full },
       }))
 
-      // ② Firestore：対象日のキーだけ差し替え（他の日は保持）
       const uid = userIdRef.current
       if (!uid) return
       const current = dailyRecordsRef.current[date] ?? {}
-      const merged: DailyRecord = { ...current, ...clean }
+      const merged: DailyRecord = { ...current, ...full }
       await setDoc(
         doc(db, 'users', uid),
         { dailyRecords: { [date]: merged } },
         { merge: true },
       )
     },
-    [],
+    [todayWeather],
   )
 
-  /** 顔診断の emotion だけを安全に更新 */
   const updateEmotion = useCallback(
     async (date: string, emotion: string) => {
-      // ① ローカル
       setDailyRecords(prev => ({
         ...prev,
         [date]: { ...(prev[date] ?? {}), emotion },
       }))
 
-      // ② Firestore（対象日のみ）
       const uid = userIdRef.current
       if (!uid) return
       const current = dailyRecordsRef.current[date] ?? {}
@@ -142,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [],
   )
 
-  /** 日付が変わったら “編集中フィールドのみ” を初期化（dailyRecords は保持） */
+  // 日付切り替え時の UI リセット
   useEffect(() => {
     const tick = () => {
       const now = dateKey()
@@ -154,9 +165,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setMemo(INITIAL_DATA.memo)
         setTag1(INITIAL_DATA.tag1)
         setTag2(INITIAL_DATA.tag2)
+        setTodayWeather(null)
       }
     }
-    const id = setInterval(tick, 60_000)
+    const id = setInterval(tick, 60000)
     tick()
     const onVisible = () => {
       if (document.visibilityState === 'visible') tick()
@@ -168,7 +180,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [todayKey])
 
-  /** トップレベルの設定だけを同期（dailyRecords はここでは送らない） */
   const syncTopLevelToFirestore = useCallback(
     async (uid: string) => {
       const userDocRef = doc(db, 'users', uid)
@@ -189,7 +200,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [sliderValue, circleColor, selectedTags, memo, tag1, tag2],
   )
 
-  /** 初期ロード（ログイン状態の監視と初回データ読み込み） */
+  // 初期ロード
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async user => {
       if (user) {
@@ -215,7 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTag2(data.tag2 ?? INITIAL_DATA.tag2)
           setDailyRecords(data.dailyRecords ?? INITIAL_DATA.dailyRecords)
         } else {
-          // ドキュメントがなければ初期化
           await setDoc(userDocRef, INITIAL_DATA, { merge: true })
           setDailyRecords(INITIAL_DATA.dailyRecords)
         }
@@ -227,7 +237,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe()
   }, [])
 
-  /** トップレベルの値が変わったらのみ同期（dailyRecords は個別関数で保存） */
   useEffect(() => {
     const uid = userIdRef.current
     if (uid) {
@@ -253,6 +262,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTag1,
         setTag2,
         setDailyRecords,
+        setTodayWeather, // ⭐ Weather 渡し口
         addDailyRecord,
         updateEmotion,
       }}

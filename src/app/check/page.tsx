@@ -9,8 +9,10 @@ import Live from '../component/LiveFace'
 import WeatherBox from '../component/WeatherBox'
 import { useAuthContext } from '../context/AuthContext'
 
+
 export default function Check() {
   const { addDailyRecord, circleColor } = useAuthContext()
+  const { setTodayWeather } = useAuthContext()
 
   // 例: 2025-10-07 形式、Asia/Tokyo 固定
   const dateKey = useCallback(
@@ -74,7 +76,7 @@ export default function Check() {
             />
             <div className="w-full h-140 mb-32 flex flex-row justify-around">
               <div className="w-1/3 h-auto flex flex-col justify-center items-center rounded bg-blue-light">
-                <WeatherBox />
+                <WeatherBox onWeather={setTodayWeather} />
               </div>
               <div className="w-1/3 h-auto flex flex-col justify-center items-center rounded bg-blue-light">
                 <div className="text-blue-dark font-semibold text-md">睡眠時間</div>
