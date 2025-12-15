@@ -39,6 +39,7 @@ interface AuthContextType {
   tag1: string | null
   tag2: string | null
   dailyRecords: Record<string, DailyRecord>
+  todayWeather: DailyRecord['weather'] | null
 
   setSliderValue: React.Dispatch<React.SetStateAction<number>>
   setCircleColor: React.Dispatch<React.SetStateAction<string>>
@@ -67,6 +68,7 @@ const INITIAL_DATA = {
   tag1: null as string | null,
   tag2: null as string | null,
   dailyRecords: {} as Record<string, DailyRecord>,
+
 }
 
 const dateKey = (d = new Date()) =>
@@ -255,6 +257,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         tag1,
         tag2,
         dailyRecords,
+        todayWeather,
         setSliderValue,
         setCircleColor,
         setSelectedTags,
@@ -262,7 +265,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTag1,
         setTag2,
         setDailyRecords,
-        setTodayWeather, // ⭐ Weather 渡し口
+        setTodayWeather,
         addDailyRecord,
         updateEmotion,
       }}

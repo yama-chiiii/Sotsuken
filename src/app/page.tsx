@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Footer from './component/Footer'
 
+import { generateAdvice } from './api/advice'
 import { useAuthContext } from './context/AuthContext'
 import './globals.css'
 import ClientWrapper from './layout.server'
@@ -13,6 +14,7 @@ export default function Home() {
   const { circleColor } = useAuthContext()
   const { dailyRecords } = useAuthContext()
   const today = moment().format('YYYY-MM-DD')
+
 
   const { selectedTags, memo } = useAuthContext()
 
@@ -27,6 +29,32 @@ export default function Home() {
     selectedTags: dailyRecords[today]?.selectedTags ?? [],
     memo: dailyRecords[today]?.memo ?? '',
   }
+  const { todayWeather } = useAuthContext()
+
+  // 今日の自己記録
+  const todayRecord = dailyRecords[today] ?? {}
+
+  const mood = getMoodText(todayRecord.sliderValue ?? 3)
+  const activity = todayRecord.selectedTags ?? []
+  const emotion = todayRecord.emotion ?? null
+  const memoText = todayRecord.memo ?? ''
+
+  // 天気データ
+  const weather = {
+    temp: todayWeather?.temp ?? null,
+    pressure: todayWeather?.pressure ?? null,
+    condition: todayWeather?.condition ?? '',
+  }
+
+  const todayAllData = {
+    mood,
+    activity,
+    emotion,
+    memo: memoText,
+    weather,
+  }
+  // console.log('今日のアドバイス入力データ:', todayAllData)
+  const advice = generateAdvice(todayAllData)
 
   return (
     <ClientWrapper>
@@ -105,12 +133,8 @@ export default function Home() {
                     ひとことアドバイス
                   </div>
                   <div className='px-40 mt-20 mb-20 '>
-                    <div className='font-semibold'>
-                      昨日は部屋の電気がついている時間が長かったですね？
-                      <br />
-                      作業も大事ですが、睡眠は十分にとるようにしましょう！
-                      <br />
-                      (照度センサの値で測定)
+                    <div className='font-semibold whitespace-pre-line'>
+                      {advice}
                     </div>
                   </div>
                 </div>
