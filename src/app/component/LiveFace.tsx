@@ -14,15 +14,7 @@ const DETECTOR_INPUT = 224
 const EXPRESSION_THRESHOLD = 0.72
 const COOLDOWN_MS = 1500
 
-// コンポーネント内の先頭あたりに追加
-const dateKey = () =>
-  new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(
-    new Date(),
-  )
-
-type TinyFaceDetectorOptions = InstanceType<
-  typeof FaceAPI.TinyFaceDetectorOptions
->
+type TinyFaceDetectorOptions = InstanceType<typeof FaceAPI.TinyFaceDetectorOptions>
 
 type NextDataWindow = Window & { __NEXT_DATA__?: { assetPrefix?: string } }
 function hasNextData(w: unknown): w is NextDataWindow {
@@ -30,6 +22,7 @@ function hasNextData(w: unknown): w is NextDataWindow {
   const obj = w as Record<string, unknown>
   return Object.prototype.hasOwnProperty.call(obj, '__NEXT_DATA__')
 }
+
 const ASSET_PREFIX =
   (typeof window !== 'undefined' && hasNextData(window)
     ? window.__NEXT_DATA__?.assetPrefix ?? ''
@@ -43,31 +36,37 @@ type LiveProps = {
 }
 
 export default function Live({ onShot }: LiveProps = {}) {
-  // ----- Refs / State -----
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { updateEmotion } = useAuthContext()
+
+  const { updateEmotion, todayKey } = useAuthContext()
+
+  // face-api / models
   const faceapiRef = useRef<typeof import('@vladmandic/face-api') | null>(null)
   const modelsLoadedRef = useRef(false)
-  const loadingRef = useRef<Promise<void> | null>(null)
+  const tfReadyPromiseRef = useRef<Promise<void> | null>(null)
+  const modelsLoadPromiseRef = useRef<Promise<void> | null>(null)
 
   const detectorOptRef = useRef<TinyFaceDetectorOptions | null>(null)
   const lastInputSizeRef = useRef<number>(DETECTOR_INPUT)
 
+  // camera
   const streamRef = useRef<MediaStream | null>(null)
 
-  const [status, setStatus] = useState('初期化中…')
+  // ui
+  const [status, setStatus] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isActive, setIsActive] = useState(false)
+  const [isModelLoading, setIsModelLoading] = useState(false)
 
-  const [liveEmotion, setLiveEmotion] = useState<string | null>(null) // ライブ推定（画面には表示しない）
-  const [shotEmotion, setShotEmotion] = useState<string | null>(null) // 撮影後だけ表示する
+  const [liveEmotion, setLiveEmotion] = useState<string | null>(null) // ライブ推定（表示しない）
+  const [shotEmotion, setShotEmotion] = useState<string | null>(null) // 撮影後のみ表示
 
-  // 軽量化：FPS間引き & タブ非表示で停止
+  // loop control
   const lastRunRef = useRef(0)
   const [pageVisible, setPageVisible] = useState(true)
 
-  // 連発抑制
+  // cooldown
   const lastEmotionRef = useRef<string | null>(null)
   const lastEmitTsRef = useRef(0)
 
@@ -86,42 +85,59 @@ export default function Live({ onShot }: LiveProps = {}) {
     }
   }
 
-  // ----- モデル読み込み -----
-  useEffect(() => {
-    let cancelled = false
-    loadingRef.current ??= (async () => {
+  const ensureTfReadyOnce = useCallback(async () => {
+    if (tfReadyPromiseRef.current) return tfReadyPromiseRef.current
+
+    tfReadyPromiseRef.current = (async () => {
+      setStatus('TensorFlow 準備中…')
       try {
-        setStatus('TensorFlow 準備中…')
         try {
           await tf.setBackend('webgl')
         } catch {
           await tf.setBackend('cpu')
         }
         await tf.ready()
+      } finally {
+        // ここでは status を消さない（モデルロードに続くため）
+      }
+    })()
+
+    return tfReadyPromiseRef.current
+  }, [])
+
+  const ensureModelsLoadedOnce = useCallback(async () => {
+    if (modelsLoadedRef.current) return
+    if (modelsLoadPromiseRef.current) return modelsLoadPromiseRef.current
+
+    modelsLoadPromiseRef.current = (async () => {
+      setError(null)
+      setIsModelLoading(true)
+      try {
+        await ensureTfReadyOnce()
 
         setStatus('モデル読み込み中…')
         const faceapi = await import('@vladmandic/face-api')
-        if (cancelled) return
         faceapiRef.current = faceapi
 
         const base = `${ASSET_PREFIX}/models`.replace(/\/{2,}/g, '/')
+
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(base),
           faceapi.nets.faceExpressionNet.loadFromUri(base),
         ])
-        if (!cancelled) {
-          modelsLoadedRef.current = true
-          setStatus('')
-        }
+
+        modelsLoadedRef.current = true
+        setStatus('')
       } catch (e) {
         console.error('[face-api] model loading failed:', e)
         setError('モデルの初期化でエラーが発生しました')
+      } finally {
+        setIsModelLoading(false)
       }
     })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+
+    return modelsLoadPromiseRef.current
+  }, [ensureTfReadyOnce])
 
   // ----- タブ非表示で停止 -----
   useEffect(() => {
@@ -134,9 +150,22 @@ export default function Live({ onShot }: LiveProps = {}) {
   const startCamera = useCallback(async () => {
     const video = videoRef.current
     if (!video) return
-    setShotEmotion(null) // 撮影前は結果を出さない
+
+    setError(null)
+    setShotEmotion(null)
+    setStatus('準備中…')
+
+    // ✅ 初回の不安定さ対策：ユーザー操作（起動ボタン）で確実にモデルをロード
+    await ensureModelsLoadedOnce()
+    if (!modelsLoadedRef.current) {
+      // ロード失敗時はここで止める
+      setIsActive(false)
+      return
+    }
+
     setStatus('カメラ起動中…')
 
+    // 既存stream停止
     if (video.srcObject instanceof MediaStream) {
       video.srcObject.getTracks().forEach((t) => t.stop())
       video.srcObject = null
@@ -151,6 +180,7 @@ export default function Live({ onShot }: LiveProps = {}) {
         },
         audio: false,
       })
+
       streamRef.current = stream
       video.srcObject = stream
       video.setAttribute('playsinline', '')
@@ -158,14 +188,16 @@ export default function Live({ onShot }: LiveProps = {}) {
       video.autoplay = true
 
       await waitVideoReady(video)
+
       setIsActive(true)
       setStatus('')
     } catch (e) {
       console.error('[camera] getUserMedia failed', e)
       setError('カメラの起動に失敗しました（権限/デバイスをご確認ください）')
       setIsActive(false)
+      setStatus('')
     }
-  }, [])
+  }, [ensureModelsLoadedOnce])
 
   // ----- カメラ停止 -----
   const stopCamera = useCallback(() => {
@@ -178,6 +210,7 @@ export default function Live({ onShot }: LiveProps = {}) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
+
     const c = canvasRef.current
     const ctx = c?.getContext('2d')
     if (c && ctx) ctx.clearRect(0, 0, c.width, c.height)
@@ -188,24 +221,19 @@ export default function Live({ onShot }: LiveProps = {}) {
   }, [])
 
   // ----- 撮影（親へも通知） -----
-  // 既存の shot を置き換え
   const shot = useCallback(() => {
     const fixed = liveEmotion ?? null
 
-    // 親へ通知（必要なら）
     if (onShot) onShot(fixed)
 
-    // ★ ここがポイント：emotion だけを当日キーで安全に部分更新
+    // ✅ ここが重要：必ず AuthContext の todayKey で保存
     if (fixed) {
-      void updateEmotion(dateKey(), fixed)
+      void updateEmotion(todayKey, fixed)
     }
 
-    // 画面には「撮影後」だけ表示
     setShotEmotion(fixed)
-
-    // 運用に合わせて停止（継続したいならこの1行は削除OK）
     stopCamera()
-  }, [liveEmotion, onShot, stopCamera, updateEmotion])
+  }, [liveEmotion, onShot, stopCamera, updateEmotion, todayKey])
 
   // ----- 検出＆描画 -----
   const detectFaces = useCallback(async () => {
@@ -224,10 +252,7 @@ export default function Live({ onShot }: LiveProps = {}) {
     if (canvas.width !== width) canvas.width = width
     if (canvas.height !== height) canvas.height = height
 
-    if (
-      !detectorOptRef.current ||
-      lastInputSizeRef.current !== DETECTOR_INPUT
-    ) {
+    if (!detectorOptRef.current || lastInputSizeRef.current !== DETECTOR_INPUT) {
       detectorOptRef.current = new faceapi.TinyFaceDetectorOptions({
         inputSize: DETECTOR_INPUT,
         scoreThreshold: 0.4,
@@ -262,6 +287,7 @@ export default function Live({ onShot }: LiveProps = {}) {
         const now = performance.now()
         const isNew = bestLabel !== lastEmotionRef.current
         const cooled = now - lastEmitTsRef.current > COOLDOWN_MS
+
         if (bestScore >= EXPRESSION_THRESHOLD && (isNew || cooled)) {
           setLiveEmotion(bestLabel)
           lastEmotionRef.current = bestLabel
@@ -274,6 +300,7 @@ export default function Live({ onShot }: LiveProps = {}) {
   // ----- 推論ループ -----
   useEffect(() => {
     let rafId = 0
+
     const loop = async (ts: number) => {
       if (isActive && pageVisible) {
         if (ts - lastRunRef.current >= 1000 / DETECT_FPS) {
@@ -283,6 +310,7 @@ export default function Live({ onShot }: LiveProps = {}) {
       }
       rafId = requestAnimationFrame(loop)
     }
+
     rafId = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(rafId)
   }, [isActive, pageVisible, detectFaces])
@@ -290,7 +318,6 @@ export default function Live({ onShot }: LiveProps = {}) {
   // ----- UI -----
   return (
     <div className='mx-auto max-w-3xl'>
-      {/* 見出し：ピンクの下線 */}
       <div className='my-32 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
         カメラ診断
       </div>
@@ -324,21 +351,24 @@ export default function Live({ onShot }: LiveProps = {}) {
         </div>
       </div>
 
-      {/* ボタン：青×ピンク、中央寄せ、スマホ縦/PC横 */}
       <div className='mt-5 w-full'>
         <div className='flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 px-2'>
           <button
             onClick={startCamera}
-            className='px-5 py-2.5 rounded-xl font-semibold bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-300 transition'
+            disabled={isModelLoading}
+            className='px-5 py-2.5 rounded-xl font-semibold bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-300 transition'
           >
-            カメラ起動
+            {isModelLoading ? '準備中…' : 'カメラ起動'}
           </button>
+
           <button
             onClick={shot}
-            className='px-5 py-2.5 rounded-xl font-semibold bg-pink-500 text-white shadow-sm hover:bg-pink-600 active:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-300 transition'
+            disabled={!isActive}
+            className='px-5 py-2.5 rounded-xl font-semibold bg-pink-500 text-white shadow-sm hover:bg-pink-600 active:bg-pink-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-pink-300 transition'
           >
             撮影
           </button>
+
           <button
             onClick={stopCamera}
             className='px-5 py-2.5 rounded-xl font-semibold border-2 border-blue-600 text-blue-600 bg-white hover:bg-blue-50 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300 transition'
@@ -348,7 +378,6 @@ export default function Live({ onShot }: LiveProps = {}) {
         </div>
       </div>
 
-      {/* 診断結果：撮影後のみ太字で表示 */}
       {shotEmotion !== null && (
         <div className='mt-6 text-center'>
           <span className='text-lg sm:text-xl font-bold text-gray-700 mr-2'>
