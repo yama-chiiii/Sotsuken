@@ -6,9 +6,9 @@ import Link from 'next/link'
 import Footer from './component/Footer'
 
 import { generateAdvice } from './api/advice'
+import ClientWrapper from './ClientWrapper'
 import { useAuthContext } from './context/AuthContext'
 import './globals.css'
-import ClientWrapper from './layout.server'
 
 export default function Home() {
   const { circleColor } = useAuthContext()

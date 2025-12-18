@@ -6,9 +6,9 @@ import 'moment/locale/ja'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import React, { useMemo, useState } from 'react'
+import ClientWrapper from '../ClientWrapper'
 import Footer from '../component/Footer'
 import { useAuthContext, type DailyRecord } from '../context/AuthContext'
-import ClientWrapper from '../layout.server'
 
 moment.locale('ja')
 
