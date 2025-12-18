@@ -1,6 +1,5 @@
 'use client'
 
-import moment from 'moment'
 import Image from 'next/image'
 import Link from 'next/link'
 import Footer from './component/Footer'
@@ -11,12 +10,14 @@ import { useAuthContext } from './context/AuthContext'
 import './globals.css'
 
 export default function Home() {
-  const { circleColor } = useAuthContext()
-  const { dailyRecords } = useAuthContext()
-  const today = moment().format('YYYY-MM-DD')
-
-
-  const { selectedTags, memo } = useAuthContext()
+  const {
+    circleColor,
+    dailyRecords,
+    todayKey,
+    selectedTags,
+    memo,
+    todayWeather,
+  } = useAuthContext()
 
   const getMoodText = (value: number) => {
     if (value <= 1.5) return '不調'
@@ -24,20 +25,20 @@ export default function Home() {
     return '良好'
   }
 
+  // ✅ 今日の自己記録（todayKey基準）
+  const todayRecord = dailyRecords[todayKey] ?? {}
+
+  // 表示用データ（存在しなければデフォルト）
   const todayData = {
-    sliderValue: dailyRecords[today]?.sliderValue ?? 3,
-    selectedTags: dailyRecords[today]?.selectedTags ?? [],
-    memo: dailyRecords[today]?.memo ?? '',
+    sliderValue: todayRecord.sliderValue ?? 3,
+    selectedTags: todayRecord.selectedTags ?? [],
+    memo: todayRecord.memo ?? '',
   }
-  const { todayWeather } = useAuthContext()
 
-  // 今日の自己記録
-  const todayRecord = dailyRecords[today] ?? {}
-
-  const mood = getMoodText(todayRecord.sliderValue ?? 3)
-  const activity = todayRecord.selectedTags ?? []
+  const mood = getMoodText(todayData.sliderValue)
+  const activity = todayData.selectedTags
   const emotion = todayRecord.emotion ?? null
-  const memoText = todayRecord.memo ?? ''
+  const memoText = todayData.memo
 
   // 天気データ
   const weather = {
@@ -53,7 +54,7 @@ export default function Home() {
     memo: memoText,
     weather,
   }
-  // console.log('今日のアドバイス入力データ:', todayAllData)
+
   const advice = generateAdvice(todayAllData)
 
   return (
@@ -64,6 +65,7 @@ export default function Home() {
             <div className='mt-64 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
               今日の記録
             </div>
+
             <div className='flex flex-row-reverse '>
               <Link href={'/syousai'}>
                 <button className='w-80 h-32 mt-20 mx-36 sm:mx-84 font-semibold rounded-md text-white bg-blue-dark'>
@@ -71,6 +73,7 @@ export default function Home() {
                 </button>
               </Link>
             </div>
+
             <div className='flex flex-col md:flex-row h-auto md:h-320 mx-32 sm:mx-84 my-16 bg-blue-verylight shadow-md rounded-md'>
               <div className='w-full md:w-1/2 h-full flex justify-center items-center'>
                 <div
@@ -78,6 +81,7 @@ export default function Home() {
                   style={{ backgroundColor: circleColor }}
                 ></div>
               </div>
+
               <div className='w-full md:w-1/2 h-full flex flex-col '>
                 <div className='flex flex-col items-center'>
                   <div className='mt-20 sm:mt-40 text-md sm:text-xl font-semibold'>
@@ -86,11 +90,15 @@ export default function Home() {
                   <div className='text-3xl font-semibold mt-8'>
                     {getMoodText(todayData.sliderValue)}
                   </div>
+
                   <div className='flex flex-row'>
-                    {/* タグ表示 */}
-                    {selectedTags.map((tag, index) => (
+                    {/* ✅ タグ表示：基本は今日の記録を優先。なければトップレベルを表示 */}
+                    {(todayData.selectedTags.length > 0
+                      ? todayData.selectedTags
+                      : selectedTags
+                    ).map((tag, index) => (
                       <div
-                        key={index}
+                        key={`${tag}-${index}`}
                         className='px-16 py-4 bg-blue-light rounded-full text-blue-dark mx-4 mt-12 text-md font-semibold '
                       >
                         {tag}
@@ -98,24 +106,28 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+
                 <div className='flex flex-col md:mb-0 mb-32'>
                   <div className='ml-28 mt-16 md:text-sm text-xl font-mPlus font-semibold'>
                     今日のひとことメモ
                   </div>
                   <div className='w-full flex justify-center flex-wrap'>
                     <div className='w-11/12 border-3 rounded-md font-semibold mt-4 bg-white px-4 py-12'>
-                      {memo}
+                      {/* ✅ メモ：今日の記録を優先。なければトップレベル */}
+                      {todayData.memo || memo}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
           <div>
             <div className='flex flex-col mt-64 md:mt-0'>
               <div className='mt-64 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
                 ロボットからの記録
               </div>
+
               <div className='flex flex-col items-center mt-12'>
                 <Image
                   src='/robot.svg'
@@ -125,9 +137,9 @@ export default function Home() {
                   className='mt-12'
                 />
                 <div className='mt-4 font-semibold text-2xl'>
-                  本日の体調：
-                  <span className='text-green'>異常なし</span>
+                  本日の体調：<span className='text-green'>異常なし</span>
                 </div>
+
                 <div className='w-4/5 flex flex-col justify-start border-3 mb-12 border-gray-300 rounded-md mt-24'>
                   <div className='mt-32 mx-36 text-xl sm:text-2xl font-semibold border-b-3 border-pink-dark'>
                     ひとことアドバイス
@@ -139,12 +151,12 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+
               <div className='w-11/12 flex flex-row-reverse mb-32 font-semibold text-blue-dark'>
                 詳しく見る＞
               </div>
             </div>
 
-            {/* sticky: スクロールとともに位置が変わらない。bottom-0がいるよ！ */}
             <div className='w-full sticky bottom-0 z-10 flex justify-center bg-blue-100'>
               <Footer />
             </div>

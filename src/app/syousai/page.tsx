@@ -7,8 +7,10 @@ import { useAuthContext, type DailyRecord } from '../context/AuthContext'
 
 export default function Syousai() {
   const DEFAULT_SYOUSAI_GRAY = '#F2F2F2'
+  const router = useRouter()
 
   const {
+    todayKey,
     dailyRecords,
     addDailyRecord,
     sliderValue,
@@ -24,81 +26,76 @@ export default function Syousai() {
     tag2,
     setTag2,
   } = useAuthContext()
-  const router = useRouter()
 
-  const dateKey = () =>
-    new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(
-      new Date(),
-    )
-  const today = dateKey()
+  // ✅ その日の既定値（必須型にしてTSエラー回避）
+  const defaults: {
+    sliderValue: number
+    selectedTags: string[]
+    memo: string
+    circleColor: string
+  } = {
+    sliderValue: 3,
+    selectedTags: [],
+    memo: '',
+    circleColor: DEFAULT_SYOUSAI_GRAY,
+  }
 
+  // ✅ todayKey が変わったら、その日のデータをフォームへ反映（=日付跨ぎ対応）
   useEffect(() => {
-    const defaults: DailyRecord = {
-      sliderValue: 3,
-      selectedTags: [],
-      memo: '',
-      circleColor: '#F2F2F2',
-    }
     const recs = (dailyRecords ?? {}) as Record<string, Partial<DailyRecord>>
-    const raw = recs[today] ?? {}
-    const todayData: DailyRecord = {
+    const raw = recs[todayKey] ?? {}
+
+    const todayData: typeof defaults = {
       sliderValue: raw.sliderValue ?? defaults.sliderValue,
       selectedTags: raw.selectedTags ?? defaults.selectedTags,
       memo: raw.memo ?? defaults.memo,
       circleColor: raw.circleColor ?? defaults.circleColor,
     }
-    setSliderValue(todayData.sliderValue ?? 0)
-    setSelectedTags(todayData.selectedTags ?? [])
-    setMemo(todayData.memo ?? '')
-    setCircleColor(todayData.circleColor ?? '#F2F2F2')
-    setTag1(todayData.selectedTags?.[0] ?? null)
-    setTag2(todayData.selectedTags?.[1] ?? null)
-  }, [
-    dailyRecords,
-    setSliderValue,
-    setSelectedTags,
-    setMemo,
-    setCircleColor,
-    setTag1,
-    setTag2,
-    today,
-  ])
+
+    setSliderValue(todayData.sliderValue)
+    setSelectedTags(todayData.selectedTags)
+    setMemo(todayData.memo)
+    setCircleColor(todayData.circleColor)
+    setTag1(todayData.selectedTags[0] ?? null)
+    setTag2(todayData.selectedTags[1] ?? null)
+  }, [dailyRecords, todayKey, setSliderValue, setSelectedTags, setMemo, setCircleColor, setTag1, setTag2, defaults.sliderValue, defaults.selectedTags, defaults.memo, defaults.circleColor])
 
   const handleTag1Click = (tag: string) => {
     if (tag1 === tag) {
-      setTag1(null) // 選択解除
-      setSelectedTags((prev: string[]) => prev.filter((t) => t !== tag))
+      setTag1(null)
+      setSelectedTags((prev) => prev.filter((t) => t !== tag))
     } else {
-      setTag1(tag) // 新たに選択
-      setSelectedTags((prev: string[]) =>
-        prev.includes(tag) ? prev : [...prev, tag],
-      )
+      setTag1(tag)
+      setSelectedTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
     }
   }
 
   const handleTag2Click = (tag: string) => {
     if (tag2 === tag) {
       setTag2(null)
-      setSelectedTags((prev: string[]) => prev.filter((t) => t !== tag))
+      setSelectedTags((prev) => prev.filter((t) => t !== tag))
     } else {
       setTag2(tag)
-      setSelectedTags((prev: string[]) =>
-        prev.includes(tag) ? prev : [...prev, tag],
-      )
+      setSelectedTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newRecord: Partial<DailyRecord> = {
       sliderValue,
       selectedTags,
       memo,
     }
-    // ← 既定の灰色(#F2F2F2)は“未設定扱い”にして保存しない
-    if (circleColor && circleColor.toLowerCase() !== DEFAULT_SYOUSAI_GRAY.toLowerCase()) {
+
+    // 既定の灰色(#F2F2F2)は未設定扱いにして保存しない
+    if (
+      circleColor &&
+      circleColor.toLowerCase() !== DEFAULT_SYOUSAI_GRAY.toLowerCase()
+    ) {
       newRecord.circleColor = circleColor
     }
-    addDailyRecord(today, newRecord)
+
+    await addDailyRecord(todayKey, newRecord) // ✅ todayKeyで保存
     alert('保存しました！')
     router.push('/')
   }
@@ -124,22 +121,28 @@ export default function Syousai() {
   ]
 
   return (
-    <div className='w-full min-h-screen flex flex-col items-center bg-blue-100'>
+    // ✅ 日付跨ぎで確実にフォームを切り替える（リマウント）
+    <div
+      key={todayKey}
+      className='w-full min-h-screen flex flex-col items-center bg-blue-100'
+    >
       <div className='w-full md:w-1/2 flex flex-col items-center min-h-screen bg-white font-mPlus'>
         <div className='w-full mt-36 flex flex-col items-center'>
           <Slider />
         </div>
+
         <div className='w-full h-auto flex flex-col items-start'>
           <div className='mt-64 mx-36 text-xl sm:text-lg font-semibold border-b-3 border-pink-dark'>
             下記の中から当てはまる気持ちを選んでください(各1つ選択可)
           </div>
         </div>
+
         <div className='w-11/12 h-auto flex flex-col items-center'>
           <div className='w-full flex flex-col items-center mt-24 border-4 rounded-xl'>
             <div className='flex justify-center mt-16 mx-24 text-lg font-semibold'>
               今の気持ちは?
             </div>
-            {/* タグ */}
+
             <div className='w-11/12 flex flex-col justify-start'>
               <div className='flex flex-row flex-wrap'>
                 {tagsNow.map((tag) => (
@@ -161,10 +164,13 @@ export default function Syousai() {
                 さらに表示
               </div>
             </div>
+
             <div className='mt-24 w-11/12 h-2 bg-gray-200 ' />
+
             <div className='flex justify-center mt-16 mx-24 text-lg font-semibold'>
               一番大きく影響しているのは?
             </div>
+
             <div className='w-11/12 flex flex-col justify-start pb-24'>
               <div className='flex flex-row flex-wrap'>
                 {tagsInfluence.map((tag) => (
@@ -185,11 +191,13 @@ export default function Syousai() {
             </div>
           </div>
         </div>
+
         <div className='w-full h-auto flex flex-col items-start'>
           <div className='mt-64 mx-36 text-xl sm:text-lg font-semibold border-b-3 border-pink-dark'>
             ひとことメモ (※64文字以内)
           </div>
         </div>
+
         <div className='w-full flex justify-center'>
           <textarea
             maxLength={64}
