@@ -155,7 +155,6 @@ export default function Live({ onShot }: LiveProps = {}) {
     setShotEmotion(null)
     setStatus('準備中…')
 
-    // ✅ 初回の不安定さ対策：ユーザー操作（起動ボタン）で確実にモデルをロード
     await ensureModelsLoadedOnce()
     if (!modelsLoadedRef.current) {
       // ロード失敗時はここで止める
