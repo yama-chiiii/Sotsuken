@@ -47,15 +47,11 @@ export default function WeatherBox({
 
   return (
     <div className='text-blue-dark font-semibold flex flex-col items-center py-4'>
-      <div className='text-md'>天気</div>
+      <div className='text-md my-8'>天気</div>
       {weather && (
         <>
-          <div className='text-4xl'>{getWeatherIcon(weather.description)}</div>
-          <div className='text-xl mt-2'>{weather.description}</div>
-          <div className='text-md'>{weather.temp}℃</div>
-          {/* <div className='text-md mt-1'>気圧: {weather.pressure} hPa</div>
-          <div className='text-md mt-1'>湿度: {weather.humidity}%</div>
-          <div className='text-md mt-1'>状態: {weather.condition}</div> */}
+          <div className='text-6xl'>{getWeatherIcon(weather.description)}</div>
+          <div className='text-xl mt-4'>{weather.description}</div>
         </>
       )}
     </div>

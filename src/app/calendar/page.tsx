@@ -214,9 +214,9 @@ export default function Calendar() {
                   className="my-12 mx-12 w-40 h-40 md:w-64 md:h-64"
                 />
                 <div className="flex flex-col ml-16">
-                  <div className="font-semibold">ロボットの記録</div>
+                  <div className="font-semibold">客観的評価システム</div>
                   <div className="whitespace-nowrap mt-4 font-semibold text-gray-400">
-                    ロボットで顔診断を実施します
+                    天気情報表示＆表情診断ページに移動します
                   </div>
                 </div>
                 <div className="w-full flex justify-end px-24">
