@@ -1,7 +1,7 @@
 // app/api/advice.ts
 
 export type AdviceInput = {
-  mood: string // "良好" "普通" "不調"
+  mood: string
   activity: string[]
   emotion: string | null
   memo: string
@@ -25,7 +25,6 @@ function emotionTone(emotion: string | null): EmotionTone {
   if (!emotion) return "unknown"
   const e = emotion.toLowerCase()
 
-  // face-api でよく出るもの中心
   if (["happy", "surprised"].includes(e)) return "pos"
   if (["sad", "angry", "disgusted", "fearful"].includes(e)) return "neg"
   if (["neutral"].includes(e)) return "neu"
