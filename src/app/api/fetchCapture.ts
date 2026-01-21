@@ -1,8 +1,17 @@
 export const fetchFaceAnalysis = async () => {
-  const res = await fetch("http://10.202.202.110:5000/analyze", {
+  const baseUrl = process.env.NEXT_PUBLIC_PY_API_BASE
+
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_PY_API_BASE is not defined")
+  }
+
+  const res = await fetch(`${baseUrl}/analyze`, {
     method: "POST",
   })
 
-  const data = await res.json()
-  return data
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`)
+  }
+
+  return res.json()
 }
