@@ -197,15 +197,11 @@ export default function Syousai() {
                       tag1 === tag ? 'bg-blue-dark text-white' : 'bg-blue-light text-blue-dark'
                     }`}
                     onClick={() => handleTag1Click(tag)}
-                    disabled={tag1 !== null && tag1 !== tag}
+                    // disabled={tag1 !== null && tag1 !== tag}
                   >
                     {tag}
                   </button>
                 ))}
-              </div>
-
-              <div className="mt-12 border-dotted font-semibold text-gray-500">
-                さらに表示
               </div>
             </div>
 
@@ -224,7 +220,7 @@ export default function Syousai() {
                       tag2 === tag ? 'bg-blue-dark text-white' : 'bg-blue-light text-blue-dark'
                     }`}
                     onClick={() => handleTag2Click(tag)}
-                    disabled={tag2 !== null && tag2 !== tag}
+                    // disabled={tag2 !== null && tag2 !== tag}
                   >
                     {tag}
                   </button>
